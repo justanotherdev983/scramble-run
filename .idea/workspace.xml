@@ -5,17 +5,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="74d4c940-4ebd-4220-9b6c-f329b854a61d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/code/go1.20.7.linux-amd64.tar.gz" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/code/main.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="GOROOT" url="file:///usr/lib/go-1.22" />
+  <component name="GOROOT" url="file://$PROJECT_DIR$/../../../sdk/go1.23.4" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="urls">
+      <list>
+        <option value="file:$PROJECT_DIR$/../../../go" />
+      </list>
+    </option>
+    <option name="useGoPathFromSystemEnvironment" value="false" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
@@ -30,12 +38,13 @@
     "Go Build.go build main.go.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.go.formatter.settings.were.checked": "true",
     "RunOnceActivity.go.migrated.go.modules.settings": "true",
     "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "feat/eerste-setup",
     "go.import.settings.migrated": "true",
-    "last_opened_file_path": "/home/bou",
+    "last_opened_file_path": "//wsl.localhost/Ubuntu/home/bou/code/git/scramble-run",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm"
@@ -57,7 +66,7 @@
       <window_info anchor="bottom" id="Version Control" order="0" />
       <window_info anchor="bottom" id="Problems" order="1" />
       <window_info anchor="bottom" id="Problems View" order="2" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="3" visible="true" weight="0.33016306" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="3" visible="true" weight="0.18768185" />
       <window_info anchor="bottom" id="Run" order="4" weight="0.33016306" />
       <window_info anchor="bottom" id="Services" order="4" />
       <window_info anchor="right" id="Endpoints" />
@@ -68,7 +77,7 @@
       <window_info anchor="right" id="Database" order="2" weight="0.25" />
       <window_info anchor="right" id="Gradle" order="3" weight="0.25" />
       <window_info anchor="right" id="Maven" order="4" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Project" order="5" visible="true" weight="0.14952761" />
+      <window_info anchor="right" content_ui="combo" id="Project" order="5" visible="true" weight="0.04018789" />
     </layout>
   </component>
   <component name="RunManager">
@@ -89,8 +98,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-2f6e6cc45a70-76709e8e2002-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-251.14649.63" />
-        <option value="bundled-js-predefined-d6986cc7102b-b81319f9767f-JavaScript-GO-251.14649.63" />
+        <option value="bundled-gosdk-d297c17c1fbd-d82d926f19eb-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-243.22562.186" />
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-GO-243.22562.186" />
       </set>
     </attachedChunks>
   </component>
