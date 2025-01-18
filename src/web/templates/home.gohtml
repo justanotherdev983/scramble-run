@@ -1,0 +1,33 @@
+{{/* templates/home.gohtml */}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Title}} - Chicken Racing</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+<header>
+    <h1>{{.Title}}</h1>
+    <p>Welcome, {{.UserData.Name}}!</p>
+    {{/*template "nav" .*/}}
+</header>
+
+<main>
+    <h2>Race Information</h2>
+    <p>Race Name: {{.Races.Name}}</p>
+    <p>Chickens:</p>
+    <ul>
+        {{range .Races.ChickenNames}}
+            <li>{{.}}</li>
+        {{end}}
+    </ul>
+    {{/*template "content" .*/}}
+</main>
+
+<footer>
+    {{/*template "footer" .*/}}
+</footer>
+</body>
+</html>
