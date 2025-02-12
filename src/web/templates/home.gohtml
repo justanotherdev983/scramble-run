@@ -1,33 +1,58 @@
-{{/* templates/home.gohtml */}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>{{.Title}} - Chicken Racing</title>
-    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/main.css" />
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body>
-<header>
-    <h1>{{.Title}}</h1>
-    <p>Welcome, {{.UserData.Name}}!</p>
-    {{/*template "nav" .*/}}
+<header class="header">
+    <div class="header-content">
+        <h1 class="logo">{{.Title}}</h1>
+        <p class="welcome">Welcome, {{.UserData.Name}}!</p>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/races">Races</a></li>
+                <li><a href="/how-to-play">How to Play</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/login">Login</a></li>
+            </ul>
+        </nav>
+    </div>
 </header>
 
-<main>
-    <h2>Race Information</h2>
-    <p>Race Name: {{.Races.Name}}</p>
-    <p>Chickens:</p>
-    <ul>
-        {{range .Races.ChickenNames}}
-            <li>{{.}}</li>
-        {{end}}
-    </ul>
-    {{/*template "content" .*/}}
+<main class="main">
+    <section class="race-info">
+        <h2>Race Information</h2>
+        <p>Latest Race Results:</p>
+        <ul class="race-list">
+            {{range .Races}}
+                <li class="race-item">
+                    <strong>{{.Name}}</strong> - Winner: {{.Winner}} - Date: {{.Date}}<br />
+                    Chickens:
+                    <ul class="chicken-list">
+                        {{range .ChickenNames}}
+                            <li>{{.}}</li>
+                        {{end}}
+                    </ul>
+                </li>
+            {{end}}
+        </ul>
+    </section>
 </main>
 
-<footer>
-    {{/*template "footer" .*/}}
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 Chicken Racing. All rights reserved.</p>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/terms">Terms of Service</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+            </ul>
+        </nav>
+    </div>
 </footer>
 </body>
 </html>
