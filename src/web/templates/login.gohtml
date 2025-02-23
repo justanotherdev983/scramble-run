@@ -1,39 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{.Title}} - Chicken Racing</title>
-    <link rel="stylesheet" href="/static/css/main.css">
-    <link rel="stylesheet" href="/static/css/login.css">
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-</head>
-<body>
-<header>
-    <h1>{{.Title}}</h1>
-    <p>Please log in to use our services!</p>
-</header>
+{{define "css"}}
+    <link rel="stylesheet" href="/static/css/login.css" />
+{{end}}
 
-<main>
-
+{{define "content"}}
     <div class="form-container">
         <p class="title">Login</p>
         <form class="form">
+    <span class="input-span">
+      <label for="email" class="label">Email</label>
+      <input type="email" name="email" id="email" />
+    </span>
             <span class="input-span">
-                <label for="email" class="label">Email</label>
-                <input type="email" name="email" id="email"/>
-            </span>
-            <span class="input-span">
-                <label for="password" class="label">Password</label>
-                <input type="password" name="password" id="password"/>
-            </span>
+      <label for="password" class="label">Password</label>
+      <input type="password" name="password" id="password" />
+    </span>
             <span class="span"><a href="#">Forgot password?</a></span>
             <input class="submit" type="submit" value="Log in" />
             <span class="span">Don't have an account? <a href="#">Sign up</a></span>
         </form>
     </div>
-</main>
+{{end}}
 
-<footer>
-</footer>
-</body>
-</html>
+{{template "base" .}}

@@ -1,58 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <title>{{.Title}} - Chicken Racing</title>
-    <link rel="stylesheet" href="/static/css/main.css" />
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-</head>
-<body>
-<header class="header">
-    <div class="header-content">
-        <h1 class="logo">{{.Title}}</h1>
-        <p class="welcome">Welcome, {{.UserData.Name}}!</p>
-        <nav>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/races">Races</a></li>
-                <li><a href="/how-to-play">How to Play</a></li>
-                <li><a href="/contact">Contact</a></li>
-                <li><a href="/login">Login</a></li>
-            </ul>
-        </nav>
-    </div>
-</header>
+{{define "content"}}
+    <div class="container">
+        <header class="race-header">
+            <h1 class="race-title">Virtual Chicken Racing</h1>
+            <div class="race-timer">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Next race in: {{.NextRaceTime}}
+            </div>
+        </header>
 
-<main class="main">
-    <section class="race-info">
-        <h2>Race Information</h2>
-        <p>Latest Race Results:</p>
-        <ul class="race-list">
-            {{range .Races}}
-                <li class="race-item">
-                    <strong>{{.Name}}</strong> - Winner: {{.Winner}} - Date: {{.Date}}<br />
-                    Chickens:
-                    <ul class="chicken-list">
-                        {{range .ChickenNames}}
-                            <li>{{.}}</li>
+        <main class="race-content">
+            <!-- Race Track Section -->
+            <section class="race-track">
+                <h2>Race Track</h2>
+                <div class="track-container">
+                    <div class="track-lane"></div>
+                    <div class="track-lane"></div>
+                    <div class="track-lane"></div>
+                    {{if .ActiveRace}}
+                        {{range .ActiveRace.Chickens}}
+                            <div class="chicken-racer" style="top: {{.Lane}}%; left: {{.Progress}}%">
+                            </div>
                         {{end}}
-                    </ul>
-                </li>
-            {{end}}
-        </ul>
-    </section>
-</main>
+                    {{end}}
+                </div>
+            </section>
 
-<footer class="footer">
-    <div class="footer-content">
-        <p>&copy; 2024 Chicken Racing. All rights reserved.</p>
-        <nav>
-            <ul class="footer-links">
-                <li><a href="/terms">Terms of Service</a></li>
-                <li><a href="/privacy">Privacy Policy</a></li>
+            <!-- Betting Panel -->
+            <section class="betting-panel">
+                <h2>Place Your Bet</h2>
+                <div class="chicken-list">
+                    {{if .Chickens}}
+                        {{range .Chickens}}
+                            <div class="chicken-option"
+                                 hx-get="/select-chicken/{{.ID}}"
+                                 hx-trigger="click"
+                                 hx-target="#winnings-calc"
+                                 hx-swap="outerHTML">
+                                <div class="chicken-info">
+                                    <div class="chicken-avatar" style="background-color: {{.Color}}"></div>
+                                    <span>{{.Name}}</span>
+                                </div>
+                                <span class="chicken-odds">{{.Odds}}</span>
+                            </div>
+                        {{end}}
+                    {{end}}
+                </div>
+
+                <label>
+                    Bet Amount (Credits)
+                    <input type="number"
+                           class="bet-input"
+                           value="10"
+                           hx-post="/calculate-winnings"
+                           hx-trigger="input"
+                           hx-target="#winnings-calc"
+                           hx-swap="outerHTML"
+                           name="betAmount" />
+                </label>
+
+                <div class="winnings-display" id="winnings-calc">
+                    <p>Potential Win:</p>
+                    <span class="winnings-amount">{{.PotentialWinnings}} Credits</span>
+                </div>
+
+                <button class="place-bet-btn"
+                        hx-post="/place-bet"
+                        hx-swap="outerHTML"
+                        hx-include="[name='betAmount']">
+                    Place Bet
+                </button>
+            </section>
+        </main>
+
+        <!-- Race History -->
+        <section class="race-info">
+            <h2>Race Information</h2>
+            <p>Latest Race Results:</p>
+            <ul class="race-list">
+                {{if .Races}}
+                    {{range .Races}}
+                        <li class="race-item">
+                            <strong>{{.Name}}</strong> - Winner: {{.Winner}} - Date: {{.Date}}
+                            <ul class="chicken-list">
+                                {{range .ChickenNames}}
+                                    <li>{{.}}</li>
+                                {{end}}
+                            </ul>
+                        </li>
+                    {{end}}
+                {{end}}
             </ul>
-        </nav>
+        </section>
     </div>
-</footer>
-</body>
-</html>
+{{end}}

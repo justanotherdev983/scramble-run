@@ -1,123 +1,485 @@
-body {
-    font-family: sans-serif;
-    background-color: #121212;
-    color: #fff;
+/* Reset and Base Styles */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: #1a1c2e;
+    color: #ffffff;
+    line-height: 1.6;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-a {
-    text-decoration: none;
-    color: #58bc82;
+/* Layout Components */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-.header {
-    background-color: #212121;
-    color: #fff;
+.main {
+    flex: 1;
+    padding: 2rem 0;
+}
+
+/* Navigation and Header */
+.navbar {
+    background-color: #252842;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
     padding: 1rem 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.header-content {
+.navbar-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
+    gap: 2rem;
 }
 
 .logo {
     font-size: 1.5rem;
     font-weight: bold;
+    text-decoration: none;
+    background: linear-gradient(to right, #fbbf24, #f97316);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    white-space: nowrap;
 }
 
-.welcome {
-    font-size: 1rem;
-}
-
-.nav-links {
-    list-style: none;
+.nav-menu {
     display: flex;
+    align-items: center;
     gap: 2rem;
 }
 
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+
 .nav-links a {
-    color: #fff;
+    color: #ffffff;
     text-decoration: none;
-    transition: color 0.3s ease;
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+    position: relative;
+    transition: color 0.2s;
 }
 
 .nav-links a:hover {
-    color: #58bc82;
+    color: #fbbf24;
 }
 
-.main {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 2rem;
-    flex: 1;
+.nav-links a::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 0;
+    background-color: #fbbf24;
+    transition: width 0.2s;
 }
 
-.race-info {
-    background-color: #212121;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+.nav-links a:hover::after,
+.nav-links a.active::after {
     width: 100%;
-    max-width: none;
-    min-height: 60vh;
-
 }
 
-.race-list {
-    list-style: none;
-    padding: 0;
+.nav-links a.active {
+    color: #fbbf24;
 }
 
-.race-item {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border-bottom: 1px solid #333;
+/* User Navigation */
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
 }
 
-.chicken-list {
-    list-style: disc;
-    padding-left: 2rem;
+.credits-display {
+    background: linear-gradient(to right, #fbbf24, #f97316);
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
-.footer {
-    background-color: #212121;
+.user-menu {
+    position: relative;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.user-info:hover {
+    background-color: #2a2d4a;
+}
+
+.user-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background-color: #252842;
+    border-radius: 8px;
+    min-width: 200px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s;
+}
+
+.dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-menu a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
     color: #fff;
-    padding: 1rem 0;
-    text-align: center;
-    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.dropdown-menu a:hover {
+    background-color: #2a2d4a;
+}
+
+.dropdown-menu svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Mobile Menu */
+.mobile-menu-button {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+/* Footer */
+.footer {
+    background-color: #252842;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem 0;
+    margin-top: auto;
 }
 
 .footer-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 2rem;
 }
 
 .footer-links {
-    list-style: none;
     display: flex;
-    gap: 1rem;
+    gap: 2rem;
+    list-style: none;
 }
 
 .footer-links a {
-    color: #fff;
+    color: #9ca3af;
     text-decoration: none;
-    transition: color 0.3s ease;
+    font-size: 0.875rem;
+    transition: color 0.2s;
 }
 
 .footer-links a:hover {
-    color: #58bc82;
+    color: #ffffff;
 }
+
+/* Race Content Styles */
+.race-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.race-title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.race-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #252842;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+}
+
+.race-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Race Track */
+.race-track {
+    background-color: #252842;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.track-container {
+    aspect-ratio: 16 / 9;
+    background-color: #1e2235;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.track-lane {
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.track-lane:nth-child(1) {
+    top: 25%;
+}
+.track-lane:nth-child(2) {
+    top: 50%;
+}
+.track-lane:nth-child(3) {
+    top: 75%;
+}
+
+/* Betting Panel */
+.betting-panel {
+    background-color: #252842;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.chicken-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.chicken-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #1e2235;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.chicken-option:hover {
+    background-color: #2a2d4a;
+}
+
+.chicken-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.chicken-avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+}
+
+.chicken-odds {
+    color: #9ca3af;
+}
+
+/* Form Elements */
+.bet-input {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #1e2235;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    margin: 0.5rem 0;
+}
+
+.bet-input:focus {
+    outline: none;
+    border-color: #fbbf24;
+}
+
+.winnings-display {
+    background-color: #1e2235;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.winnings-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fbbf24;
+}
+
+.place-bet-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: #fbbf24;
+    color: #1a1c2e;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.place-bet-btn:hover {
+    background-color: #f59e0b;
+}
+
+/* Race Info */
+.race-info {
+    background-color: #252842;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.race-list {
+    list-style: none;
+    margin-top: 1rem;
+}
+
+.race-item {
+    background-color: #1e2235;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.race-item .chicken-list {
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .mobile-menu-button {
+        display: block;
+    }
+
+    .nav-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: #252842;
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .nav-menu.active {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+    }
+
+    .user-section {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+    }
+
+    .dropdown-menu {
+        position: static;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .race-content {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .footer-links {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .race-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .navbar-container {
+        flex-wrap: wrap;
+    }
+
+    .credits-display {
+        order: -1;
+        width: 100%;
+        text-align: center;
+    }
+}
+
