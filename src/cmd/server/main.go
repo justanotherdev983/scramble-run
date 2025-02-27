@@ -298,49 +298,6 @@ func selectChickenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func addRaceHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		raceName := r.FormValue("name")
-		winner := r.FormValue("winner")
-		chickenNames := r.FormValue("chicken_names")
-
-		var chickenNamesJSON string
-		if chickenNames != "" {
-			chickenNamesJSON = fmt.Sprintf("[\"%s\"]", chickenNames)
-		}
-
-		// Use parameterized query to prevent SQL injection
-		stmt, err := db.Prepare("INSERT INTO races (name, winner, chicken_names) VALUES (?, ?, ?)")
-		if err != nil {
-			log.Printf("Error preparing SQL statement: %v", err)
-			http.Error(w, "Failed to add race", http.StatusInternalServerError)
-			return
-		}
-		defer stmt.Close()
-
-		_, err = stmt.Exec(raceName, winner, chickenNamesJSON)
-		if err != nil {
-			log.Printf("Error inserting new race: %v", err)
-			http.Error(w, "Failed to add race", http.StatusInternalServerError)
-			return
-		}
-
-		http.Redirect(w, r, "/", http.StatusSeeOther) // Redirect to home page
-		return
-
-	} else {
-		// Handle GET request and render the form
-		//err := tmpl.ExecuteTemplate(w, "add_race.gohtml", data)
-		//if err != nil {
-		//	log.Printf("Error rendering add-race template: %v", err)
-		//	http.Error(w, "Failed to render page", http.StatusInternalServerError)
-		//	return
-		//}
-		http.Error(w, "Add race template not implemented",
-			http.StatusInternalServerError) // TODO: Implement add_race.gohtml
-	}
-}
-
 func calculateWinningsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -493,7 +450,6 @@ func main() {
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/select-chicken/", selectChickenHandler)
-	http.HandleFunc("/add-race", addRaceHandler)
 	http.HandleFunc("/calculate-winnings", calculateWinningsHandler)
 	http.HandleFunc("/place-bet", placeBetHandler)
 
