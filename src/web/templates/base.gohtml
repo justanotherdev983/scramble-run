@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <title>{{.Title}} - Chicken Racing</title>
-    <link rel="stylesheet" href="/static/css/main.css" />
+
+    {{template "css" .}}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body>
@@ -40,3 +41,6 @@
 </footer>
 </body>
 </html>
+{{define "css"}}
+    <!-- Default CSS (can be empty) -->
+{{end}}
