@@ -11,4 +11,4 @@ $ sudo apt install golang-go
 $ go run src/cmd/server/main.go
 ```
 # Video link
--   vierde-db: WIP
+-   vierde-db: https://youtu.be/dMJajjFbMMk

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	"io/ioutil"
+    "os"
 	"log"
 	"net/http"
 	"strconv"
@@ -127,7 +127,7 @@ func init_database() *sql.DB {
 
 	if count == 0 {
 		// Insert data only if the table is empty
-		sql_file, err := ioutil.ReadFile("src/internal/database/init_database.sql")
+		sql_file, err := os.ReadFile("src/internal/database/init_database.sql")
 		if err != nil {
 			log.Printf("Failed to read SQL initialization file: %v", err)
 			return nil
