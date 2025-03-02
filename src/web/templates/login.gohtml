@@ -1,0 +1,55 @@
+{{define "css"}}
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/login.css" />
+{{end}}
+
+{{define "content"}}
+    <div class="login-container">
+        <div class="login-form">
+            <div class="login-header">
+                <h1 class="login-title">Login</h1>
+                <p class="login-subtitle">
+                    Enter your credentials to access your account
+                </p>
+            </div>
+            <form class="form">
+                <div class="form-group">
+                    <label for="email" class="label">Email</label>
+                    <input
+                            type="email"
+                            name="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="Your Email"
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="password" class="label">Password</label>
+                    <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            class="form-input"
+                            placeholder="Your Password"
+                    />
+                </div>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox" class="remember-me-input" />
+                        <span class="remember-me-label">Remember Me</span>
+                    </label>
+                    <div class="forgot-password">
+                        <a href="#">Forgot password?</a>
+                    </div>
+                </div>
+                <div class="form-submit">
+                    <input class="submit-button" type="submit" value="Log in" />
+                </div>
+
+                <div class="signup-link">
+                    Don't have an account? <a href="#">Sign up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{{end}}

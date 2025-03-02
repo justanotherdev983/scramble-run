@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>{{.Title}} - Chicken Racing</title>
+
+    {{template "css" .}}
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+<header class="header">
+    <div class="header-content">
+        <h1 class="logo">{{.Title}}</h1>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/races">Races</a></li>
+                <li><a href="/how-to-play">How to Play</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/login">Login</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main class="main">
+    {{template "content" .}}
+</main>
+
+<footer class="footer">
+    <div class="footer-content">
+        <p>&copy; 2024 Chicken Racing. All rights reserved.</p>
+        <nav>
+            <ul class="footer-links">
+                <li><a href="/terms">Terms of Service</a></li>
+                <li><a href="/privacy">Privacy Policy</a></li>
+            </ul>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>
+{{define "css"}}
+{{end}}

@@ -1,1 +1,17 @@
+# IDE stuff
 .idea/
+
+# Go binary executables
+*.exe
+*.test
+*.out
+
+# Go modules cache
+.go/pkg/
+.go/bin/
+
+# Database files
+*.db
+
+# Logs
+*.log
