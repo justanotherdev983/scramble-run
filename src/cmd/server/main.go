@@ -182,6 +182,51 @@ func init() {
         </div>
     `))
 
+	raceInfoTemplate = template.Must(template.New("raceInfoSnippet").Parse(`
+		{{/* This is the entire new innerHTML for div#race-timer-dynamic-area */}}
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="race-timer-icon">
+			<circle cx="12" cy="12" r="10"></circle>
+			<polyline points="12 6 12 12 16 14"></polyline>
+		</svg>
+		<span class="race-timer-prefix">
+			{{/* Determine prefix based on StatusMsg or CountdownStr presence */}}
+			{{ if .IsRaceRunning }}
+				Race in Progress:
+			{{ else if .CountdownStr }}
+				Next race in:
+			{{ else if .StatusMsg }}
+				{{/* StatusMsg itself might be descriptive, e.g., "Last race finished:" */}}
+				{{/* Let it be blank if StatusMsg is the main info */}}
+			{{ else }}
+				Status:
+			{{ end }}
+		</span>
+		<span class="race-timer-countdown">
+			{{if .CountdownStr}}
+				{{.CountdownStr}}
+			{{/* If race is running, StatusMsg handles "Race in Progress:", RaceName has the actual name.
+			CountdownStr for a running race is usually not the primary display here. */}}
+			{{else if .StatusMsg}}
+				{{.StatusMsg}} {{/* Catches "Next one soon...", "Checking schedule...", "Race in Progress" (if no countdown) */}}
+			{{else}}
+				--:--
+			{{end}}
+		</span>
+		{{if .RaceName}}
+			<span class="race-timer-racename">({{ .RaceName }})</span>
+		{{end}}
+		<br> {{/* Or use CSS for layout */}}
+		<span class="race-timer-bettingstatus">
+			{{if .IsBettingOpen}}
+				Betting is Open!
+			{{else if .IsRaceRunning}}
+				Betting Closed (Race Running)
+			{{else}}
+				Betting is Closed
+			{{end}}
+		</span>
+	`))
+
 	log.Println("Templates loaded successfully")
 }
 

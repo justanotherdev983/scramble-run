@@ -2,17 +2,53 @@
 <link rel="stylesheet" href="/static/css/main.css" />
 {{end}}
 
-
 {{define "content"}}
     <div class="container">
         <header class="race-header">
             <h1 class="race-title">Virtual Chicken Racing</h1>
-            <div class="race-timer">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <!-- This div will now poll for updates and replace its own content -->
+            <div class="race-timer"
+                 id="race-timer-dynamic-area"  
+                 hx-get="/next-race-info"      
+                 hx-trigger="every 1s"         
+                 hx-swap="innerHTML">          
+
+                <!-- Initial content (rendered by homeHandler on first page load) -->
+                <!-- This structure should be similar to what raceInfoTemplate produces -->
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="race-timer-icon">
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
-                Next race in: {{.NextRaceTime}}
+                <span class="race-timer-prefix">
+                    {{/* Logic for initial display based on PageData from homeHandler */}}
+                    {{ if .CurrentRaceDisplay }}
+                        {{ if eq .CurrentRaceDisplay.Status "Running" }}
+                            Race in Progress:
+                        {{ else if eq .CurrentRaceDisplay.Status "Finished" }}
+                            Last race:
+                        {{ else if .NextRaceTime }} {{/* Check if NextRaceTime itself isn't a status message */}}
+                            Next race in:
+                        {{ end }}
+                    {{ else if .NextRaceTime }}
+                         Next race in:
+                    {{ else }}
+                        Status:
+                    {{ end }}
+                </span>
+                <span class="race-timer-countdown">
+                    {{.NextRaceTime}} {{/* This is PageData.NextRaceTime */}}
+                </span>
+                {{if .CurrentRaceDisplay }}
+                    <span class="race-timer-racename">
+                        ({{ if .CurrentRaceDisplay.Name }}{{ .CurrentRaceDisplay.Name }}{{ end }}
+                         {{ if eq .CurrentRaceDisplay.Status "Finished" }} - Winner: {{.CurrentRaceDisplay.Winner}}{{end}})
+                    </span>
+                {{end}}
+                <br>
+                <span class="race-timer-bettingstatus">
+                    (Betting status updates soon...)
+                </span>
+                <!-- End of initial content -->
             </div>
         </header>
 
@@ -21,9 +57,7 @@
             <section class="race-track">
                 <h2>Race Track</h2>
                 <div class="track-container">
-                    <div class="track-lane"></div>
-                    <div class="track-lane"></div>
-                    <div class="track-lane"></div>
+                    <!-- ... your track lanes and chicken rendering ... -->
                     {{if .ActiveRace}}
                         {{range .ActiveRace.Chickens}}
                             <div class="chicken" style="top: {{.Lane}}%; left: {{.Progress}}%">
@@ -40,53 +74,67 @@
             <section class="betting-panel">
                 <h2>Place Your Bet</h2>
                 <form id="bettingForm"
-                      hx-post="/place-bet"        
-                      hx-target="#bet-response-container" 
+                      hx-post="/place-bet"
+                      hx-target="#bet-response-container"
                       hx-swap="innerHTML">
                     <div class="chicken-list">
                         {{if .Chickens}}
                             {{range .Chickens}}
                                 <div class="chicken-option"
+                                    data-chicken-id="{{.ID}}" 
                                     hx-get="/select-chicken/{{.ID}}"
                                     hx-trigger="click"
                                     hx-target="#winnings-calc"
-                                    hx-swap="outerHTML">
+                                    hx-swap="innerHTML" 
+                                    hx-vals='{"betAmount": "javascript:document.querySelector(\"#bettingForm [name=betAmount]\").value"}'>
                                     <div class="chicken-info">
                                         <div class="chicken-avatar" style="background-color: {{.Color}}"></div>
                                         <span>{{.Name}}</span>
                                     </div>
                                     <span class="chicken-odds">{{.Odds}}</span>
+                                    <!-- Add hidden radio button for form submission if needed -->
+                                    <input type="radio" name="selectedChickenRadio" value="{{.ID}}" class="d-none visually-hidden">
                                 </div>
                             {{end}}
                         {{end}}
                     </div>
+                     <!-- Single hidden input that gets updated, for the main form submission -->
+                    <input type="hidden" id="selectedChickenForBet" name="selectedChicken" value="">
+
 
                     <label>
                         Bet Amount (Credits)
                         <input type="number"
                             class="bet-input"
                             value="10"
+                            min="1"
                             hx-post="/calculate-winnings"
-                            hx-trigger="input"
+                            hx-trigger="input delay:500ms, change"
                             hx-target="#winnings-calc"
-                            hx-swap="outerHTML"
-                            name="betAmount" />
+                            hx-swap="innerHTML" 
+                            name="betAmount"
+                            hx-include="[name='selectedChicken']" /> 
                     </label>
 
+                    <!-- Winnings Calculation Display (HTMX Target) -->
+                    <!-- The hx-swap on chicken-option and bet-input should be innerHTML if winnings-calc is the container -->
                     <div class="winnings-display" id="winnings-calc">
                         <p>Potential Win:</p>
-                        <span class="winnings-amount">{{.PotentialWinnings}} Credits</span>
+                        <span class="winnings-amount">{{printf "%.2f" .PotentialWinnings}} Credits</span>
+                        <!-- The /select-chicken and /calculate-winnings handlers should return -->
+                        <!-- HTML that fits *inside* this div. -->
+                        <!-- e.g., <p>Potential Win:</p><span class="winnings-amount">123.45 Credits</span><input type="hidden" name="selectedChicken" value="CHICKEN_ID_HERE" /> -->
                     </div>
 
-                    <button class="place-bet-btn"
-                            hx-post="/place-bet"
-                            hx-swap="outerHTML"
-                            hx-include="[name='betAmount']">
+
+                    <button type="submit" class="place-bet-btn"> 
                         Place Bet
                     </button>
-                </form> 
-                 <div id="bet-response-container">
-                    <!-- The content of #bet-response from your Go handler will go here -->
+                </form>
+                 <div id="bet-response-container" class="mt-3">
+                    {{ if .Message }}
+                        <div class="alert {{if .Success}}alert-success{{else}}alert-danger{{end}}">{{.Message}}</div>
+                    {{end}}
                 </div>
             </section>
         </main>
@@ -99,16 +147,56 @@
                 {{if .Races}}
                     {{range .Races}}
                         <li class="race-item">
-                            <strong>{{.Name}}</strong> - Winner: {{.Winner}} - Date: {{.Date}}
-                            <ul class="chicken-list">
+                            <strong>{{.Name}}</strong>
+                            {{if .Status}} ({{.Status}}) {{end}}
+                            {{if eq .Status "Finished"}}
+                                - Winner: {{if .Winner}}{{.Winner}}{{else}}N/A{{end}}
+                            {{end}}
+                            - Date: {{.Date.Format "Jan 2, 2006 15:04 MST"}}
+                            {{if .ChickenNames}}
+                            <ul class="chicken-list-history">
+                                Participating:
                                 {{range .ChickenNames}}
                                     <li>{{.}}</li>
                                 {{end}}
                             </ul>
+                            {{end}}
                         </li>
                     {{end}}
+                {{else}}
+                    <li>No race history available.</li>
                 {{end}}
             </ul>
         </section>
     </div>
+
+<script>
+    // Helper to select chicken and update the hidden field for the main bet form
+    document.querySelectorAll('.chicken-option').forEach(option => {
+        option.addEventListener('click', function() {
+            const chickenId = this.dataset.chickenId;
+            document.getElementById('selectedChickenForBet').value = chickenId;
+
+            // Visually indicate selection (optional)
+            document.querySelectorAll('.chicken-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+
+            // Trigger calculation if betAmount has a value
+            const betAmountInput = document.querySelector("#bettingForm [name=betAmount]");
+            if (betAmountInput.value) {
+                 // If hx-vals for chicken option click isn't enough or causes issues,
+                 // you can manually trigger the htmx request on the bet amount input.
+                 // htmx.trigger(betAmountInput, 'input'); // or 'change'
+            }
+        });
+    });
+
+    // Ensure the #winnings-calc gets its hidden input updated by HTMX responses
+    // from /select-chicken and /calculate-winnings.
+    // The Go handlers for those should return:
+    // <p>Potential Win: XXX</p> <input type="hidden" name="selectedChicken" value="Y" />
+    // The hx-swap="innerHTML" on #winnings-calc will then correctly update it.
+    // The hx-include on the betAmount input also needs this selectedChicken value.
+    // A common pattern is to have the /calculate-winnings response *include* the hidden selectedChicken input.
+</script>
 {{end}}

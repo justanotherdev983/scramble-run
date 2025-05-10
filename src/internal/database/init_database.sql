@@ -34,6 +34,14 @@ CREATE TABLE IF NOT EXISTS bet_statuses (
     status_name TEXT NOT NULL UNIQUE
 );
 
+CREATE TABLE chickens ( -- This is the important part
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    color TEXT,
+    odds REAL,
+    lane INTEGER
+);
+
 -- Bets Table
 CREATE TABLE IF NOT EXISTS bets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
