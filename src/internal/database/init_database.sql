@@ -19,10 +19,13 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS races (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date TIMESTAMP NOT NULL,       -- Scheduled start time of the race
+    winner_chicken_id INTEGER,     -- FK to chickens table (ID of the winning chicken)
     winner TEXT, 
+    status TEXT NOT NULL DEFAULT 'Scheduled', -- 'Scheduled', 'Running', 'Finished'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Consider triggers to update this
+    FOREIGN KEY (winner_chicken_id) REFERENCES chickens(id)
 );
 
 -- Bet Statuses Table
