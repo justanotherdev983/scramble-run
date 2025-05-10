@@ -39,47 +39,55 @@
             <!-- Betting Panel -->
             <section class="betting-panel">
                 <h2>Place Your Bet</h2>
-                <div class="chicken-list">
-                    {{if .Chickens}}
-                        {{range .Chickens}}
-                            <div class="chicken-option"
-                                 hx-get="/select-chicken/{{.ID}}"
-                                 hx-trigger="click"
-                                 hx-target="#winnings-calc"
-                                 hx-swap="outerHTML">
-                                <div class="chicken-info">
-                                    <div class="chicken-avatar" style="background-color: {{.Color}}"></div>
-                                    <span>{{.Name}}</span>
+                <form id="bettingForm"
+                      hx-post="/place-bet"        
+                      hx-target="#bet-response-container" 
+                      hx-swap="innerHTML">
+                    <div class="chicken-list">
+                        {{if .Chickens}}
+                            {{range .Chickens}}
+                                <div class="chicken-option"
+                                    hx-get="/select-chicken/{{.ID}}"
+                                    hx-trigger="click"
+                                    hx-target="#winnings-calc"
+                                    hx-swap="outerHTML">
+                                    <div class="chicken-info">
+                                        <div class="chicken-avatar" style="background-color: {{.Color}}"></div>
+                                        <span>{{.Name}}</span>
+                                    </div>
+                                    <span class="chicken-odds">{{.Odds}}</span>
                                 </div>
-                                <span class="chicken-odds">{{.Odds}}</span>
-                            </div>
+                            {{end}}
                         {{end}}
-                    {{end}}
+                    </div>
+
+                    <label>
+                        Bet Amount (Credits)
+                        <input type="number"
+                            class="bet-input"
+                            value="10"
+                            hx-post="/calculate-winnings"
+                            hx-trigger="input"
+                            hx-target="#winnings-calc"
+                            hx-swap="outerHTML"
+                            name="betAmount" />
+                    </label>
+
+                    <div class="winnings-display" id="winnings-calc">
+                        <p>Potential Win:</p>
+                        <span class="winnings-amount">{{.PotentialWinnings}} Credits</span>
+                    </div>
+
+                    <button class="place-bet-btn"
+                            hx-post="/place-bet"
+                            hx-swap="outerHTML"
+                            hx-include="[name='betAmount']">
+                        Place Bet
+                    </button>
+                </form> 
+                 <div id="bet-response-container">
+                    <!-- The content of #bet-response from your Go handler will go here -->
                 </div>
-
-                <label>
-                    Bet Amount (Credits)
-                    <input type="number"
-                           class="bet-input"
-                           value="10"
-                           hx-post="/calculate-winnings"
-                           hx-trigger="input"
-                           hx-target="#winnings-calc"
-                           hx-swap="outerHTML"
-                           name="betAmount" />
-                </label>
-
-                <div class="winnings-display" id="winnings-calc">
-                    <p>Potential Win:</p>
-                    <span class="winnings-amount">{{.PotentialWinnings}} Credits</span>
-                </div>
-
-                <button class="place-bet-btn"
-                        hx-post="/place-bet"
-                        hx-swap="outerHTML"
-                        hx-include="[name='betAmount']">
-                    Place Bet
-                </button>
             </section>
         </main>
 
