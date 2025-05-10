@@ -12,7 +12,12 @@
                     Enter your credentials to access your account
                 </p>
             </div>
-            <form class="form">
+            {{if .Message}}
+                <div class="alert {{if .Success}}alert-success{{else}}alert-error{{end}}">
+                    {{.Message}}
+                </div>
+            {{end}}
+            <form class="form" method="POST" action="/login">
                 <div class="form-group">
                     <label for="email" class="label">Email</label>
                     <input
@@ -21,6 +26,7 @@
                             id="email"
                             class="form-input"
                             placeholder="Your Email"
+                            required
                     />
                 </div>
                 <div class="form-group">
@@ -31,11 +37,12 @@
                             id="password"
                             class="form-input"
                             placeholder="Your Password"
+                            required
                     />
                 </div>
                 <div class="form-options">
                     <label class="remember-me">
-                        <input type="checkbox" class="remember-me-input" />
+                        <input type="checkbox" name="remember" class="remember-me-input" />
                         <span class="remember-me-label">Remember Me</span>
                     </label>
                     <div class="forgot-password">
@@ -47,7 +54,7 @@
                 </div>
 
                 <div class="signup-link">
-                    Don't have an account? <a href="#">Sign up</a>
+                    Don't have an account? <a href="/register">Sign up</a>
                 </div>
             </form>
         </div>

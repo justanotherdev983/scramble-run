@@ -1,0 +1,75 @@
+{{define "css"}}
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/login.css" />
+{{end}}
+
+{{define "content"}}
+    <div class="login-container">
+        <div class="login-form">
+            <div class="login-header">
+                <h1 class="login-title">Sign Up</h1>
+                <p class="login-subtitle">
+                    Create your account to join Scramble Run
+                </p>
+            </div>
+            {{if .Message}}
+                <div class="alert {{if .Success}}alert-success{{else}}alert-error{{end}}">
+                    {{.Message}}
+                </div>
+            {{end}}
+            <form class="form" method="POST" action="/register">
+                <div class="form-group">
+                    <label for="name" class="label">Name</label>
+                    <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            class="form-input"
+                            placeholder="Your Name"
+                            required
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="email" class="label">Email</label>
+                    <input
+                            type="email"
+                            name="email"
+                            id="email"
+                            class="form-input"
+                            placeholder="Your Email"
+                            required
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="password" class="label">Password</label>
+                    <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            class="form-input"
+                            placeholder="Your Password"
+                            required
+                    />
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password" class="label">Confirm Password</label>
+                    <input
+                            type="password"
+                            name="confirm_password"
+                            id="confirm_password"
+                            class="form-input"
+                            placeholder="Confirm Password"
+                            required
+                    />
+                </div>
+                <div class="form-submit">
+                    <input class="submit-button" type="submit" value="Sign Up" />
+                </div>
+
+                <div class="signup-link">
+                    Already have an account? <a href="/login">Log in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{{end}}

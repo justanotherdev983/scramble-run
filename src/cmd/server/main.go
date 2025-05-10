@@ -4,12 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-    "os"
+	"os"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -17,10 +18,11 @@ import (
 const local_port string = "6969"
 
 var (
-	db            *sql.DB
-	baseTemplate  *template.Template
-	homeTemplate  *template.Template
-	loginTemplate *template.Template
+	db             *sql.DB
+	baseTemplate   *template.Template
+	homeTemplate   *template.Template
+	loginTemplate  *template.Template
+	signupTemplate *template.Template
 )
 
 type RaceInfo struct {
@@ -45,8 +47,10 @@ type ActiveRace struct {
 }
 
 type User struct {
-	Name string
-	Age  int
+	ID    int
+	Name  string
+	Email string
+	Age   int
 }
 
 type PageData struct {
@@ -57,6 +61,8 @@ type PageData struct {
 	ActiveRace        ActiveRace // Current race in progress
 	NextRaceTime      string     // Time until next race
 	PotentialWinnings float64    // Calculated winnings
+	Message           string     // For form feedback
+	Success           bool       // For form feedback
 }
 
 type WinningsCalc struct {
@@ -104,6 +110,15 @@ func init() {
 	)
 	if err != nil {
 		log.Fatalf("Error parsing login template: %v", err)
+		return
+	}
+
+	// Clone base template and parse signup template
+	signupTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles(
+		"src/web/templates/signup.gohtml",
+	)
+	if err != nil {
+		log.Fatalf("Error parsing signup template: %v", err)
 		return
 	}
 
@@ -209,14 +224,163 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	data := PageData{
-		Title: "Scramble Run",
-		UserData: User{
-			Name: "test_user",
-			Age:  99,
-		},
-		Races: get_races(db),
+		Title: "Login - Scramble Run",
 	}
+
+	// Handle form submission
+	if r.Method == http.MethodPost {
+		// Parse form data
+		err := r.ParseForm()
+		if err != nil {
+			log.Printf("Error parsing form: %v", err)
+			data.Message = "Error processing form"
+			data.Success = false
+			loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Get form values
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+
+		// Validate input
+		if email == "" || password == "" {
+			data.Message = "Email and password are required"
+			data.Success = false
+			loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Check if user exists
+		var storedPasswordHash string
+		var userID int
+		var userName string
+
+		err = db.QueryRow("SELECT id, name, password_hash FROM users WHERE email = ?", email).Scan(&userID, &userName, &storedPasswordHash)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				data.Message = "Invalid email or password"
+				data.Success = false
+				loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+				return
+			}
+			log.Printf("Database error: %v", err)
+			data.Message = "An error occurred. Please try again."
+			data.Success = false
+			loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Compare password with stored hash
+		err = bcrypt.CompareHashAndPassword([]byte(storedPasswordHash), []byte(password))
+		if err != nil {
+			data.Message = "Invalid email or password"
+			data.Success = false
+			loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Login successful - in a real app, you would set a session cookie here
+		// For now, we'll just redirect to the home page
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// Display login form for GET requests
 	err := loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+	if err != nil {
+		log.Printf("Template execution error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func signupHandler(w http.ResponseWriter, r *http.Request) {
+	data := PageData{
+		Title: "signup - Scramble Run",
+	}
+
+	// Handle form submission
+	if r.Method == http.MethodPost {
+		// Parse form data
+		err := r.ParseForm()
+		if err != nil {
+			log.Printf("Error parsing form: %v", err)
+			data.Message = "Error processing form"
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Get form values
+		name := r.FormValue("name")
+		email := r.FormValue("email")
+		password := r.FormValue("password")
+		confirmPassword := r.FormValue("confirm_password")
+
+		// Validate input
+		if name == "" || email == "" || password == "" {
+			data.Message = "All fields are required"
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		if password != confirmPassword {
+			data.Message = "Passwords do not match"
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Check if email already exists
+		var count int
+		err = db.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
+		if err != nil {
+			log.Printf("Database error: %v", err)
+			data.Message = "An error occurred. Please try again."
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		if count > 0 {
+			data.Message = "Email already in use"
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Hash the password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Error hashing password: %v", err)
+			data.Message = "An error occurred. Please try again."
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Insert new user into database
+		_, err = db.Exec("INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+			name, email, string(hashedPassword))
+		if err != nil {
+			log.Printf("Error inserting user: %v", err)
+			data.Message = "An error occurred. Please try again."
+			data.Success = false
+			signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
+			return
+		}
+
+		// Registration successful
+		data.Message = "Registration successful! You can now log in."
+		data.Success = true
+		loginTemplate.ExecuteTemplate(w, "base.gohtml", data)
+		return
+	}
+
+	// Display registration form for GET requests
+	err := signupTemplate.ExecuteTemplate(w, "base.gohtml", data)
 	if err != nil {
 		log.Printf("Template execution error: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -449,6 +613,7 @@ func main() {
 
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/signup", signupHandler)
 	http.HandleFunc("/select-chicken/", selectChickenHandler)
 	http.HandleFunc("/calculate-winnings", calculateWinningsHandler)
 	http.HandleFunc("/place-bet", placeBetHandler)
