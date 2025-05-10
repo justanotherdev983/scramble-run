@@ -86,15 +86,19 @@ type User struct {
 }
 
 type PageData struct {
-	Title             string
-	UserData          User
-	Races             []RaceInfo // List of past/all races for history
-	Chickens          []Chicken  // For betting panel (available chickens to bet on)
-	ActiveRace        ActiveRace // Represents chickens available for betting in current UI context
+	Title       string
+	UserData    User
+	UserBalance float64    // ADDED: To display user's current balance
+	Races       []RaceInfo
+	Chickens    []Chicken
+	ActiveRace  ActiveRace
 
-	// New fields for current/next race display
-	CurrentRaceDisplay *RaceInfo // Details of the race that is 'Running' or just 'Finished' for display
-	NextRaceTime       string    // Formatted string: "MM:SS" or status message
+	// For initial rendering by homeHandler, HTMX will take over for subsequent updates
+	InitialNextRaceTime     string    // Formatted string: "MM:SS" or status message
+	InitialStatusMessage    string    // e.g., "Next race in:", "Race in Progress:"
+	InitialRaceName         string    // Name of the current/next race for initial display
+	IsBettingInitiallyOpen  bool      // Betting status for initial display
+	CurrentRaceDisplay      *RaceInfo // Still useful for other race details if needed
 
 	PotentialWinnings float64
 	Message           string
@@ -150,7 +154,8 @@ func init() {
 	}
 
 	betResponseTemplate = template.Must(template.New("betResponse").Parse(`
-		<div class="bet-response" id="bet-response-area" hx-swap-oob="innerHTML"> <!-- Target for bet response -->
+		{{/* This is the content for #bet-response-area */}}
+		<div class="bet-response" id="bet-response-content">
 			{{if .Success}}
 				<div class="alert alert-success">
 					<p>{{.Message}}</p>
@@ -160,9 +165,15 @@ func init() {
 			{{else}}
 				<div class="alert alert-danger">
 					<p>{{.Message}}</p>
+					{{if ge .NewBalance 0.0}} <!-- Show balance even on failure if it's sensible -->
+					<p>Your balance: {{printf "%.2f" .NewBalance}} credits</p>
+					{{end}}
 				</div>
 			{{end}}
 		</div>
+
+		{{/* Out-of-Band Swap to update the user balance display elsewhere on the page */}}
+		<span id="user-balance-display" hx-swap-oob="true">{{printf "%.2f" .NewBalance}}</span>
 	`))
 
 	// Template for HTMX race info updates
@@ -404,15 +415,18 @@ func startRace(db *sql.DB, raceID int) error {
 	return nil
 }
 
+
+
 func finishRace(db *sql.DB, raceID int) error {
 	raceMutex.Lock()
-	defer raceMutex.Unlock()
+	// defer raceMutex.Unlock() // Defer until after settleBets potentially needs the lock or a new one.
 
 	log.Printf("Attempting to finish race ID: %d", raceID)
 
 	var currentStatus string
 	err := db.QueryRow("SELECT status FROM races WHERE id = ?", raceID).Scan(&currentStatus)
 	if err != nil {
+		raceMutex.Unlock() // Unlock before early return
 		if err == sql.ErrNoRows {
 			log.Printf("finishRace: Race ID %d not found.", raceID)
 			return fmt.Errorf("race %d not found", raceID)
@@ -422,8 +436,9 @@ func finishRace(db *sql.DB, raceID int) error {
 	}
 
 	if currentStatus != RaceStatusRunning {
+		raceMutex.Unlock() // Unlock before early return
 		log.Printf("finishRace: Race ID %d is not 'Running' (status: %s). Cannot finish.", raceID, currentStatus)
-		if currentStatus == RaceStatusFinished { // Already finished, perhaps by another call
+		if currentStatus == RaceStatusFinished {
 			return nil
 		}
 		return fmt.Errorf("race %d is not 'Running', status is %s", raceID, currentStatus)
@@ -437,41 +452,148 @@ func finishRace(db *sql.DB, raceID int) error {
 			currentRaceDetails.Winner = "N/A (No chickens)"
 			currentRaceDetails.WinnerChickenID = sql.NullInt64{Valid: false}
 		}
+		raceMutex.Unlock() // Unlock before early return
 		return errDb
 	}
 
-	// Simple random winner selection (can be weighted by odds later)
 	winnerChicken := availableChickens[rand.Intn(len(availableChickens))]
 	log.Printf("Race ID: %d finished. Winner: %s (ID: %d)", raceID, winnerChicken.Name, winnerChicken.ID)
 
-	_, err = db.Exec("UPDATE races SET status = ?, winner_chicken_id = ? WHERE id = ?", RaceStatusFinished, winnerChicken.ID, raceID)
+	// Use a transaction for updating race and settling bets
+	tx, errTx := db.Begin()
+	if errTx != nil {
+		raceMutex.Unlock() // Unlock before early return
+		log.Printf("finishRace: Failed to begin transaction for race %d: %v", raceID, errTx)
+		return errTx
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			errRollback := tx.Rollback()
+			if errRollback != nil {
+				log.Printf("finishRace: Error rolling back transaction for race %d: %v", raceID, errRollback)
+			}
+		}
+	}()
+
+	_, err = tx.Exec("UPDATE races SET status = ?, winner_chicken_id = ? WHERE id = ?", RaceStatusFinished, winnerChicken.ID, raceID)
 	if err != nil {
-		log.Printf("finishRace: Error updating race %d to Finished with winner %d: %v", raceID, winnerChicken.ID, err)
-		// Don't return yet, try to update local state
+		raceMutex.Unlock() // Unlock before early return (tx will be rolled back by defer)
+		log.Printf("finishRace: Error updating race %d to Finished in DB: %v", raceID, err)
+		return err
 	}
 
-	// Update currentRaceDetails to reflect finished state for immediate UI feedback
-	// Even if DB update failed, show intended outcome locally; next cycle might fix DB.
+	// Settle bets for this race
+	errSettle := settleBetsForRace(tx, raceID, winnerChicken.ID)
+	if errSettle != nil {
+		raceMutex.Unlock() // Unlock before early return (tx will be rolled back)
+		log.Printf("finishRace: Error settling bets for race %d: %v", raceID, errSettle)
+		return errSettle // This will cause a rollback
+	}
+
+	errCommit := tx.Commit()
+	if errCommit != nil {
+		raceMutex.Unlock() // Unlock before early return
+		log.Printf("finishRace: Error committing transaction for race %d: %v", raceID, errCommit)
+		return errCommit
+	}
+	committed = true
+
+	// Update global currentRaceDetails *after successful commit*
+	// It's better to fetch the fully updated details if necessary or construct carefully
 	if currentRaceDetails != nil && currentRaceDetails.Id == raceID {
 		currentRaceDetails.Status = RaceStatusFinished
 		currentRaceDetails.Winner = winnerChicken.Name
 		currentRaceDetails.WinnerChickenID = sql.NullInt64{Int64: int64(winnerChicken.ID), Valid: true}
 	} else {
-        // If currentRaceDetails was not set or for a different race, fetch the finished one
-        // This ensures 'currentRaceDetails' shows the most recently finished race until a new one starts/is scheduled.
-        finishedRaceInfo, _ := getRaceDetails(db, raceID) // Ignore error, best effort
-        if finishedRaceInfo != nil {
-            currentRaceDetails = finishedRaceInfo
-        }
-    }
+		// If currentRaceDetails was for a different race, or nil, update it to this finished one
+		// This ensures the UI shows the most recently finished race details.
+		updatedRaceInfo, _ := getRaceDetails(db, raceID) // Use main db connection, not tx
+		if updatedRaceInfo != nil {
+			currentRaceDetails = updatedRaceInfo
+		}
+	}
+	raceMutex.Unlock() // Unlock after all critical operations
+
+	log.Printf("Race %d successfully marked as Finished. Winner: %s. Bets settled. The raceLoop will schedule.", raceID, winnerChicken.Name)
+	return nil
+}
+
+// settleBetsForRace processes all 'Pending' bets for a finished race.
+// It updates user balances and bet statuses within the provided transaction.
+func settleBetsForRace(tx *sql.Tx, raceID int, winningChickenID int) error {
+	log.Printf("Settling bets for Race ID: %d, Winning Chicken ID: %d", raceID, winningChickenID)
+
+	// Get status IDs for 'Won' and 'Lost'
+	var wonStatusID, lostStatusID int
+	err := tx.QueryRow("SELECT id FROM bet_statuses WHERE status_name = 'Won'").Scan(&wonStatusID)
+	if err != nil {
+		return fmt.Errorf("could not find 'Won' bet status ID: %w", err)
+	}
+	err = tx.QueryRow("SELECT id FROM bet_statuses WHERE status_name = 'Lost'").Scan(&lostStatusID)
+	if err != nil {
+		return fmt.Errorf("could not find 'Lost' bet status ID: %w", err)
+	}
+	pendingStatusID, err := getPendingBetStatusID(tx) // Get pending status ID within tx
+	if err != nil {
+		return fmt.Errorf("could not find 'Pending' bet status ID for settling: %w", err)
+	}
 
 
-	// TODO: Settle bets for raceID and winnerChicken.ID
-	// This is a crucial step for a betting game. For now, just log.
-	log.Printf("TODO: Settle bets for race ID %d, winner chicken ID %d", raceID, winnerChicken.ID)
+	// Select all pending bets for this race
+	rows, err := tx.Query(`
+        SELECT b.id, b.user_id, b.chicken_id, b.bet_amount, c.odds
+        FROM bets b
+        JOIN chickens c ON b.chicken_id = c.id
+        WHERE b.race_id = ? AND b.bet_status_id = ?
+    `, raceID, pendingStatusID)
+	if err != nil {
+		return fmt.Errorf("error querying pending bets for race %d: %w", raceID, err)
+	}
+	defer rows.Close()
 
-	log.Printf("Race %d successfully marked as Finished. Winner: %s. The raceLoop will schedule the next race.", raceID, winnerChicken.Name)
-	return err // Return DB error if any
+	for rows.Next() {
+		var betID, userID, betChickenID int
+		var betAmount, chickenOdds float64
+		if err := rows.Scan(&betID, &userID, &betChickenID, &betAmount, &chickenOdds); err != nil {
+			log.Printf("settleBetsForRace: Error scanning bet row for race %d: %v", raceID, err)
+			continue // Or return error to rollback all settlements
+		}
+
+		var payout float64 = 0
+		newStatusID := lostStatusID
+
+		if betChickenID == winningChickenID {
+			payout = betAmount * chickenOdds
+			newStatusID = wonStatusID
+			log.Printf("Bet ID %d (User %d) on chicken %d WON. Bet: %.2f, Odds: %.2f, Payout: %.2f",
+				betID, userID, betChickenID, betAmount, chickenOdds, payout)
+
+			// Update user's balance
+			_, errUpdateBalance := tx.Exec("UPDATE users SET balance = balance + ? WHERE id = ?", payout, userID)
+			if errUpdateBalance != nil {
+				log.Printf("settleBetsForRace: Failed to update balance for user %d after winning bet %d: %v", userID, betID, errUpdateBalance)
+				return fmt.Errorf("failed to update balance for user %d on win: %w", userID, errUpdateBalance)
+			}
+		} else {
+			log.Printf("Bet ID %d (User %d) on chicken %d LOST. Winning chicken was %d.",
+				betID, userID, betChickenID, winningChickenID)
+			// No change to balance for losing, bet amount was already deducted.
+		}
+
+		// Update bet status and actual payout
+		_, errUpdateBet := tx.Exec("UPDATE bets SET bet_status_id = ?, actual_payout = ? WHERE id = ?", newStatusID, payout, betID)
+		if errUpdateBet != nil {
+			log.Printf("settleBetsForRace: Failed to update status for bet %d: %v", betID, errUpdateBet)
+			return fmt.Errorf("failed to update status for bet %d: %w", betID, errUpdateBet)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("error iterating bet rows for race %d: %w", raceID, err)
+	}
+
+	log.Printf("All pending bets for race %d processed.", raceID)
+	return nil
 }
 
 func raceLoop(db *sql.DB) {
@@ -796,55 +918,95 @@ func handleTriggerRaceCycle(w http.ResponseWriter, r *http.Request) {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Get userID from session to fetch actual user data and balance
-	// (Your placeholder user logic can remain as is for now)
+	currentUserID := 1 // <<<< --- !!! PLACEHOLDER: Replace with actual User ID from session !!! --- >>>
+	var currentUser User
+	var userBalance float64 // Fetch the actual balance
 
-	// Initialize PageData, but NextRaceTime and CurrentRaceDisplay will be set after calculation.
-	data := PageData{
-		Title: "Scramble Run",
-		UserData: User{ // This should be populated for the logged-in user
-			Name: "test_user", // Placeholder
-			Age:  99,          // Placeholder
-		},
-		Races:    get_races(db),
-		Chickens: availableChickens, // Use global list
-		ActiveRace: ActiveRace{
-			Chickens: availableChickens, // Use global list
-		},
-		PotentialWinnings: 0.0, // Will be updated by HTMX
-		// UserBalance: userBalance, // Pass actual user balance to the template
+	if currentUserID != 0 {
+		// Fetch user details AND balance
+		errDb := db.QueryRow("SELECT id, name, email, balance FROM users WHERE id = ?", currentUserID).Scan(&currentUserID, &currentUser.Name, &currentUser.Email, &userBalance)
+		if errDb != nil {
+			if errDb == sql.ErrNoRows {
+				log.Printf("homeHandler: User ID %d not found. Displaying as Guest.", currentUserID)
+				currentUser.Name = "Guest" // Or redirect to login
+				userBalance = 0
+			} else {
+				log.Printf("homeHandler: Error fetching user data for ID %d: %v", currentUserID, errDb)
+				currentUser.Name = "Error" // Or handle error more gracefully
+				userBalance = 0
+			}
+		}
+	} else {
+		currentUser.Name = "Guest"
+		userBalance = 0
 	}
 
-	// Lock mutex to safely access global race state variables
+
+	data := PageData{
+		Title:             "Scramble Run",
+		UserData:          currentUser, // Use fetched or Guest user
+		UserBalance:       userBalance, // Pass the fetched balance
+		Races:             get_races(db),
+		Chickens:          availableChickens,
+		ActiveRace:        ActiveRace{Chickens: availableChickens},
+		PotentialWinnings: 0.0,
+	}
+
 	raceMutex.Lock()
 	pageNextRaceStartTime := nextRaceStartTime
-	pageCurrentRaceDetails := currentRaceDetails // This could be nil, or a Running/Finished race
+	pageCurrentRaceDetails := currentRaceDetails
 	raceMutex.Unlock()
 
-	// Declare the variable to hold the calculated string for the next race time.
 	var calculatedTimeStr string
+	var calculatedStatusMsg string // More descriptive status
+	var calculatedRaceName string  // Name for current/next race
+	isBettingInitiallyOpen := false
 
 	if pageCurrentRaceDetails != nil && pageCurrentRaceDetails.Status == RaceStatusRunning {
-		calculatedTimeStr = "Race in Progress!"
+		calculatedStatusMsg = "Race in Progress:"
+		calculatedRaceName = pageCurrentRaceDetails.Name
+		calculatedTimeStr = "Running!" // Or time remaining in race if you implement that
+		isBettingInitiallyOpen = false
 	} else if !pageNextRaceStartTime.IsZero() && pageNextRaceStartTime.After(time.Now()) {
 		durationUntilNext := time.Until(pageNextRaceStartTime)
 		if durationUntilNext > 0 {
 			minutes := int(durationUntilNext.Minutes())
 			seconds := int(durationUntilNext.Seconds()) % 60
 			calculatedTimeStr = fmt.Sprintf("%02d:%02d", minutes, seconds)
+			calculatedStatusMsg = "Next race in:"
+			// Try to get name of next scheduled race for initial display
+			var nextRaceNameDB string
+			errDb := db.QueryRow("SELECT name FROM races WHERE status = ? AND date = ? ORDER BY date ASC LIMIT 1",
+				RaceStatusScheduled, pageNextRaceStartTime).Scan(&nextRaceNameDB)
+			if errDb == nil {
+				calculatedRaceName = nextRaceNameDB
+			}
+			isBettingInitiallyOpen = true
 		} else {
-			calculatedTimeStr = "Starting soon..."
+			calculatedTimeStr = "Starting..."
+			calculatedStatusMsg = "Next race:"
+			calculatedRaceName = "Get Ready!"
+			isBettingInitiallyOpen = false
 		}
 	} else if pageCurrentRaceDetails != nil && pageCurrentRaceDetails.Status == RaceStatusFinished {
-		calculatedTimeStr = "Next race soon..." // After a race finishes
-	} else {
-		calculatedTimeStr = "Calculating next race..."
+		calculatedStatusMsg = "Last race finished:"
+		calculatedRaceName = fmt.Sprintf("%s (Winner: %s)", pageCurrentRaceDetails.Name, pageCurrentRaceDetails.Winner)
+		calculatedTimeStr = "Next one soon..."
+		_, errActiveRace := getActiveRaceID(db) // Check if a new 'Scheduled' race exists for betting
+		isBettingInitiallyOpen = errActiveRace == nil
+	} else { // Default / Initializing state
+		calculatedTimeStr = "--:--"
+		calculatedStatusMsg = "Checking schedule..."
+		_, errActiveRace := getActiveRaceID(db)
+		isBettingInitiallyOpen = errActiveRace == nil
 	}
 
-	// Assign the calculated values to the PageData struct
-	data.NextRaceTime = calculatedTimeStr
-	data.CurrentRaceDisplay = pageCurrentRaceDetails // Pass the live race info
+	data.InitialNextRaceTime = calculatedTimeStr       // For initial template rendering
+	data.InitialStatusMessage = calculatedStatusMsg    // For initial template rendering
+	data.InitialRaceName = calculatedRaceName          // For initial template rendering
+	data.IsBettingInitiallyOpen = isBettingInitiallyOpen // For initial template rendering
+	data.CurrentRaceDisplay = pageCurrentRaceDetails   // Still useful for other parts of the template
 
-	// Now execute the template with the updated data
 	err := homeTemplate.ExecuteTemplate(w, "base.gohtml", data)
 	if err != nil {
 		log.Printf("homeHandler: Template execution error: %v", err)
@@ -1374,14 +1536,18 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Insert the bet with race_id and bet_status_id
-	_, err = tx.Exec("INSERT INTO bets (user_id, race_id, chicken_id, bet_amount, bet_status_id) VALUES (?, ?, ?, ?, ?)",
-		currentUserID, activeRaceID, chickenID, betAmount, pendingStatusID)
+
+	potentialPayout := betAmount * selectedChicken.Odds // selectedChicken is already fetched
+
+	// Insert the bet with race_id, bet_status_id, and potential_payout
+	_, err = tx.Exec("INSERT INTO bets (user_id, race_id, chicken_id, bet_amount, bet_status_id, potential_payout) VALUES (?, ?, ?, ?, ?, ?)",
+		currentUserID, activeRaceID, chickenID, betAmount, pendingStatusID, potentialPayout) // Added potentialPayout
 	if err != nil {
 		log.Printf("placeBetHandler: Error inserting bet: %v", err) // This was the original error point
 		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to record bet."})
 		return
 	}
+	
 
 	err = tx.Commit()
 	if err != nil {

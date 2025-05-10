@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS bet_statuses (
     status_name TEXT NOT NULL UNIQUE
 );
 
-CREATE TABLE chickens ( -- This is the important part
+CREATE TABLE IF NOT EXISTS chickens ( -- This is the important part
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     color TEXT,
@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS bets (
     bet_winner TEXT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    potential_payout REAL,
+    actual_payout REAL, 
     FOREIGN KEY (user_id) REFERENCES users (id),
     FOREIGN KEY (race_id) REFERENCES races (id),
     FOREIGN KEY (bet_status_id) REFERENCES bet_statuses (id)
@@ -92,6 +94,16 @@ VALUES (2, 2, 3, 25.0, 2, NULL);
 -- User 1 (John Doe) bets on Cluck Norris (Chicken ID 2) for Race 3. (Status: Pending)
 INSERT INTO bets (user_id, race_id, chicken_id, bet_amount, bet_status_id)
 VALUES (1, 3, 2, 100.0, 1);
+
+-- Insert sample data for bet_statuses
+-- Ensure 'Pending', 'Won', 'Lost', and any other statuses you need are present.
+-- The order of insertion determines their default IDs if AUTOINCREMENT is used.
+INSERT OR IGNORE INTO bet_statuses (status_name) VALUES ('Pending'); -- Usually ID 1
+INSERT OR IGNORE INTO bet_statuses (status_name) VALUES ('Won');     -- Usually ID 2
+INSERT OR IGNORE INTO bet_statuses (status_name) VALUES ('Lost');    -- Usually ID 3
+INSERT OR IGNORE INTO bet_statuses (status_name) VALUES ('Cancelled'); -- Usually ID 4
+-- If you used 'Completed' before, decide if 'Won'/'Lost' replace it or if it's a different concept.
+-- For betting, 'Won' and 'Lost' are more specific than a generic 'Completed'.
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_bets_user_id ON bets (user_id);
