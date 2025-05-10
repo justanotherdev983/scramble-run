@@ -439,7 +439,7 @@ func finishRace(db *sql.DB, raceID int) error {
 		raceMutex.Unlock() // Unlock before early return
 		log.Printf("finishRace: Race ID %d is not 'Running' (status: %s). Cannot finish.", raceID, currentStatus)
 		if currentStatus == RaceStatusFinished {
-			return nil
+			return nil // Already finished, perhaps by another trigger.
 		}
 		return fmt.Errorf("race %d is not 'Running', status is %s", raceID, currentStatus)
 	}
@@ -447,6 +447,9 @@ func finishRace(db *sql.DB, raceID int) error {
 	if len(availableChickens) == 0 {
 		log.Printf("finishRace: No available chickens to determine a winner for race %d.", raceID)
 		_, errDb := db.Exec("UPDATE races SET status = ?, winner_chicken_id = NULL WHERE id = ?", RaceStatusFinished, raceID)
+		if errDb != nil {
+			log.Printf("finishRace: Error updating race %d to Finished with no winner: %v", raceID, errDb)
+		}
 		if currentRaceDetails != nil && currentRaceDetails.Id == raceID {
 			currentRaceDetails.Status = RaceStatusFinished
 			currentRaceDetails.Winner = "N/A (No chickens)"
@@ -472,6 +475,8 @@ func finishRace(db *sql.DB, raceID int) error {
 			errRollback := tx.Rollback()
 			if errRollback != nil {
 				log.Printf("finishRace: Error rolling back transaction for race %d: %v", raceID, errRollback)
+			} else {
+				log.Printf("finishRace: Transaction for race %d rolled back.", raceID)
 			}
 		}
 	}()
@@ -486,32 +491,31 @@ func finishRace(db *sql.DB, raceID int) error {
 	// Settle bets for this race
 	errSettle := settleBetsForRace(tx, raceID, winnerChicken.ID)
 	if errSettle != nil {
-		raceMutex.Unlock() // Unlock before early return (tx will be rolled back)
+		raceMutex.Unlock() // Unlock before early return (tx will be rolled back by defer)
 		log.Printf("finishRace: Error settling bets for race %d: %v", raceID, errSettle)
 		return errSettle // This will cause a rollback
 	}
 
 	errCommit := tx.Commit()
 	if errCommit != nil {
-		raceMutex.Unlock() // Unlock before early return
+		raceMutex.Unlock() // Unlock before early return (tx will be rolled back by defer if !committed)
 		log.Printf("finishRace: Error committing transaction for race %d: %v", raceID, errCommit)
 		return errCommit
 	}
 	committed = true
 
 	// Update global currentRaceDetails *after successful commit*
-	// It's better to fetch the fully updated details if necessary or construct carefully
 	if currentRaceDetails != nil && currentRaceDetails.Id == raceID {
 		currentRaceDetails.Status = RaceStatusFinished
 		currentRaceDetails.Winner = winnerChicken.Name
 		currentRaceDetails.WinnerChickenID = sql.NullInt64{Int64: int64(winnerChicken.ID), Valid: true}
 	} else {
-		// If currentRaceDetails was for a different race, or nil, update it to this finished one
-		// This ensures the UI shows the most recently finished race details.
-		updatedRaceInfo, _ := getRaceDetails(db, raceID) // Use main db connection, not tx
-		if updatedRaceInfo != nil {
+		updatedRaceInfo, grErr := getRaceDetails(db, raceID) // Use main db connection, not tx
+		if grErr == nil && updatedRaceInfo != nil {
 			currentRaceDetails = updatedRaceInfo
-		}
+		} else if grErr != nil {
+            log.Printf("finishRace: Error fetching updated race details for race %d: %v", raceID, grErr)
+        }
 	}
 	raceMutex.Unlock() // Unlock after all critical operations
 
@@ -552,12 +556,16 @@ func settleBetsForRace(tx *sql.Tx, raceID int, winningChickenID int) error {
 	}
 	defer rows.Close()
 
+	var betsProcessedCount int
 	for rows.Next() {
+		betsProcessedCount++
 		var betID, userID, betChickenID int
 		var betAmount, chickenOdds float64
 		if err := rows.Scan(&betID, &userID, &betChickenID, &betAmount, &chickenOdds); err != nil {
 			log.Printf("settleBetsForRace: Error scanning bet row for race %d: %v", raceID, err)
-			continue // Or return error to rollback all settlements
+			// Consider returning error here to ensure atomicity if one scan fails.
+			// For now, continue to process other bets.
+			continue
 		}
 
 		var payout float64 = 0
@@ -592,7 +600,11 @@ func settleBetsForRace(tx *sql.Tx, raceID int, winningChickenID int) error {
 		return fmt.Errorf("error iterating bet rows for race %d: %w", raceID, err)
 	}
 
-	log.Printf("All pending bets for race %d processed.", raceID)
+	if betsProcessedCount == 0 {
+		log.Printf("settleBetsForRace: No pending bets found for race ID %d to process.", raceID)
+	} else {
+		log.Printf("settleBetsForRace: Processed %d pending bets for race %d.", betsProcessedCount, raceID)
+	}
 	return nil
 }
 
@@ -756,18 +768,19 @@ func getRaceDetails(querier rowQuerier, raceID int) (*RaceInfo, error) {
 }
 
 
-
+// getActiveRaceID identifies the race that is currently open for betting.
+// This should be the earliest scheduled race that hasn't started yet.
 func getActiveRaceID(db rowQuerier) (int, error) {
 	var raceID int
-	// Select the race with the latest date that does not have a winner.
-	// Order by date DESC ensures we prefer later scheduled races.
-	// Order by id DESC is a tie-breaker for races on the same date.
-	err := db.QueryRow("SELECT id FROM races WHERE winner IS NULL OR winner = '' ORDER BY date DESC, id DESC LIMIT 1").Scan(&raceID)
+	// A race is active for betting if it is 'Scheduled' and is the next one up.
+	// Order by date ASC ensures we get the earliest scheduled race.
+	err := db.QueryRow("SELECT id FROM races WHERE status = ? ORDER BY date ASC LIMIT 1", RaceStatusScheduled).Scan(&raceID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, fmt.Errorf("no active race available for betting at the moment")
+			// It's important to distinguish this "not found" from a general DB error for UI messages.
+			return 0, fmt.Errorf("no race currently scheduled and open for betting")
 		}
-		return 0, fmt.Errorf("error fetching active race ID: %w", err)
+		return 0, fmt.Errorf("error fetching active race ID for betting: %w", err)
 	}
 	return raceID, nil
 }
@@ -992,13 +1005,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		calculatedStatusMsg = "Last race finished:"
 		calculatedRaceName = fmt.Sprintf("%s (Winner: %s)", pageCurrentRaceDetails.Name, pageCurrentRaceDetails.Winner)
 		calculatedTimeStr = "Next one soon..."
-		_, errActiveRace := getActiveRaceID(db) // Check if a new 'Scheduled' race exists for betting
-		isBettingInitiallyOpen = errActiveRace == nil
+		// Use new getActiveRaceID to check if a new 'Scheduled' race exists for betting
+		_, errActiveRace := getActiveRaceID(db)
+		isBettingInitiallyOpen = (errActiveRace == nil)
 	} else { // Default / Initializing state
 		calculatedTimeStr = "--:--"
 		calculatedStatusMsg = "Checking schedule..."
+		// Use new getActiveRaceID
 		_, errActiveRace := getActiveRaceID(db)
-		isBettingInitiallyOpen = errActiveRace == nil
+		isBettingInitiallyOpen = (errActiveRace == nil)
 	}
 
 	data.InitialNextRaceTime = calculatedTimeStr       // For initial template rendering
@@ -1027,13 +1042,6 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if localCurrentRaceDetails != nil && localCurrentRaceDetails.Status == RaceStatusRunning {
 		statusMsg = "Race in Progress:"
 		raceNameDisplay = localCurrentRaceDetails.Name
-		// Optional: Show time remaining in current race
-		// finishTime := localCurrentRaceDetails.Date.Add(raceDuration) // This Date is start time
-		// if time.Now().Before(finishTime) {
-		//  countdownStr = fmt.Sprintf("Ends in %s", finishTime.Sub(time.Now()).Round(time.Second))
-		// } else {
-		//  countdownStr = "Finishing..."
-		// }
 		isRaceRunning = true
 		isBettingOpen = false // Betting closes when race is running
 	} else if !localNextRaceStartTime.IsZero() && localNextRaceStartTime.After(time.Now()) {
@@ -1044,9 +1052,7 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 			countdownStr = fmt.Sprintf("%02d:%02d", minutes, seconds)
 			statusMsg = "Next race starts in:"
 
-			// Attempt to get the name of the next scheduled race
 			var nextRaceNameDB string
-			// The nextRaceStartTime is for *the* next race, find its name
 			err := db.QueryRow("SELECT name FROM races WHERE status = ? AND date = ? ORDER BY date ASC LIMIT 1",
 				RaceStatusScheduled, localNextRaceStartTime).Scan(&nextRaceNameDB)
 			if err == nil {
@@ -1059,31 +1065,23 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 			countdownStr = "Starting..."
 			statusMsg = "Next race:"
 			raceNameDisplay = "Get Ready!"
-			isBettingOpen = false // Too close to start, or effectively starting
+			isBettingOpen = false 
 		}
 	} else if localCurrentRaceDetails != nil && localCurrentRaceDetails.Status == RaceStatusFinished {
 		statusMsg = "Last race finished:"
 		raceNameDisplay = fmt.Sprintf("%s (Winner: %s)", localCurrentRaceDetails.Name, localCurrentRaceDetails.Winner)
 		countdownStr = "Next one soon..."
-		// Check if a new race has been scheduled yet for betting
-        _, err := getActiveRaceID(db) // Check if a new 'Scheduled' race exists
-        if err == nil {
-            isBettingOpen = true
-        } else {
-            isBettingOpen = false
-        }
+        // Use new getActiveRaceID to check if a new 'Scheduled' race exists for betting
+        _, err := getActiveRaceID(db) 
+        isBettingOpen = (err == nil)
 
-	} else {
+	} else { // Default / Initializing state
 		countdownStr = "--:--"
 		statusMsg = "Checking schedule..."
 		raceNameDisplay = "No active race"
-		// Check if a new race has been scheduled yet for betting
-        _, err := getActiveRaceID(db) // Check if a new 'Scheduled' race exists
-        if err == nil {
-            isBettingOpen = true
-        } else {
-            isBettingOpen = false
-        }
+        // Use new getActiveRaceID
+        _, err := getActiveRaceID(db)
+        isBettingOpen = (err == nil)
 	}
 
 	data := struct {
@@ -1401,50 +1399,46 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	if r.Method != http.MethodPost {
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Method not allowed"})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Method not allowed", NewBalance: -1})
 		return
 	}
 
 	currentUserID := 1 // <<< --- !!! PLACEHOLDER: Replace with actual User ID from session !!! --- >>>
+	var userCurrentBalanceForErrorDisplay float64 = -1 // Default for display if balance fetch fails or not applicable
+	if currentUserID != 0 {
+		// Eagerly fetch balance for potential error messages, using non-transactional DB read.
+		// This is for display only if an early error occurs.
+		_ = db.QueryRow("SELECT balance FROM users WHERE id = ?", currentUserID).Scan(&userCurrentBalanceForErrorDisplay)
+	}
+
 
 	err := r.ParseForm()
 	if err != nil {
 		log.Printf("placeBetHandler: Failed to parse form: %v", err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Error processing request."})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Error processing request.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
 
-	log.Println("--- placeBetHandler Received Form Data ---")
-	for key, values := range r.Form {
-		for _, value := range values {
-			log.Printf("Form Key: [%s], Value: [%s]\n", key, value)
-		}
-	}
-	log.Println("----------------------------------------")
-
 	betAmountStr := r.FormValue("betAmount")
-	log.Printf("placeBetHandler: Raw betAmountStr from form: '%s'", betAmountStr)
 	betAmount, err := strconv.ParseFloat(betAmountStr, 64)
 	if err != nil || betAmount <= 0 {
 		log.Printf("placeBetHandler: Invalid bet amount. String: '%s', Parsed: %f, Error: %v", betAmountStr, betAmount, err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Invalid bet amount. Must be a positive number."})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Invalid bet amount. Must be a positive number.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
 
 	chickenIDStr := r.FormValue("selectedChicken")
-	log.Printf("placeBetHandler: Raw chickenIDStr from form: '%s'", chickenIDStr)
 	if chickenIDStr == "" {
 		log.Println("placeBetHandler: 'selectedChicken' form value is empty.")
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "No chicken selected. Please select a chicken first."})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "No chicken selected. Please select a chicken first.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
 	chickenID, err := strconv.Atoi(chickenIDStr)
 	if err != nil {
 		log.Printf("placeBetHandler: Failed to convert 'selectedChicken' value '%s' to an integer: %v", chickenIDStr, err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Invalid chicken selection data. Expected a numeric ID."})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Invalid chicken selection data. Expected a numeric ID.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
-	log.Printf("placeBetHandler: Parsed chickenID: %d", chickenID)
 
 	var selectedChicken Chicken
 	foundChicken := false
@@ -1457,15 +1451,14 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if !foundChicken {
 		log.Printf("placeBetHandler: Chicken with ID %d not found in availableChickens list.", chickenID)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: fmt.Sprintf("The selected chicken (ID: %d) is not available for betting.", chickenID)})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: fmt.Sprintf("The selected chicken (ID: %d) is not available for betting.", chickenID), NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
-	log.Printf("placeBetHandler: Successfully found chicken: %s (ID: %d)", selectedChicken.Name, selectedChicken.ID)
 
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("placeBetHandler: Failed to begin transaction: %v", err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Database error. Please try again later."})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Database error. Please try again later.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
 	committed := false
@@ -1475,84 +1468,100 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 			if errRollback != nil {
 				log.Printf("placeBetHandler: Error rolling back transaction: %v", errRollback)
 			} else {
-				log.Println("placeBetHandler: Transaction rolled back due to error.")
+				log.Println("placeBetHandler: Transaction rolled back due to error or incomplete processing.")
 			}
 		}
 	}()
 
-	var currentUserBalance float64
-	err = tx.QueryRow("SELECT balance FROM users WHERE id = ?", currentUserID).Scan(&currentUserBalance)
+	// Get active race ID using the transaction
+	activeRaceID, err := getActiveRaceID(tx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			log.Printf("placeBetHandler: User ID %d not found for betting.", currentUserID)
-			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "User not found."})
-		} else {
-			log.Printf("placeBetHandler: Error fetching user balance: %v", err)
-			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Database error while fetching balance."})
+		log.Printf("placeBetHandler: Could not determine active race for betting: %v", err)
+		msg := "Failed to determine active race for betting. Please try again later."
+		if strings.Contains(err.Error(), "no race currently scheduled") {
+			msg = "No races are currently open for betting. Please check back later."
 		}
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: msg, NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
+	log.Printf("placeBetHandler: Betting on Race ID: %d", activeRaceID)
 
-	if currentUserBalance < betAmount {
+	// Verify the fetched race is still 'Scheduled'
+	var raceStatus string
+	err = tx.QueryRow("SELECT status FROM races WHERE id = ?", activeRaceID).Scan(&raceStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("placeBetHandler: Race ID %d (identified as active for betting) not found in DB during status check.", activeRaceID)
+			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "The race you tried to bet on is no longer available.", NewBalance: userCurrentBalanceForErrorDisplay})
+		} else {
+			log.Printf("placeBetHandler: Error verifying status of active race ID %d: %v", activeRaceID, err)
+			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Error confirming race status. Please try again.", NewBalance: userCurrentBalanceForErrorDisplay})
+		}
+		return // Defer will rollback
+	}
+
+	if raceStatus != RaceStatusScheduled {
+		log.Printf("placeBetHandler: Race ID %d is no longer '%s' (status: %s). Betting closed.", activeRaceID, RaceStatusScheduled, raceStatus)
+		_ = betResponseTemplate.Execute(w, BetResponse{
+			Success:    false,
+			Message:    fmt.Sprintf("Betting for race (ID: %d) has just closed (Status: %s).", activeRaceID, raceStatus),
+			NewBalance: userCurrentBalanceForErrorDisplay,
+		})
+		return // Defer will rollback
+	}
+	
+	var currentUserBalanceInTx float64
+	err = tx.QueryRow("SELECT balance FROM users WHERE id = ?", currentUserID).Scan(&currentUserBalanceInTx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("placeBetHandler: User ID %d not found for betting within transaction.", currentUserID)
+			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "User not found."}) // NewBalance will use userCurrentBalanceForErrorDisplay
+		} else {
+			log.Printf("placeBetHandler: Error fetching user balance within transaction: %v", err)
+			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Database error while fetching balance."})
+		}
+		return // Defer will rollback
+	}
+
+	if currentUserBalanceInTx < betAmount {
 		_ = betResponseTemplate.Execute(w, BetResponse{
 			Success:     false,
-			Message:     fmt.Sprintf("Insufficient funds. Your balance is %.2f credits.", currentUserBalance),
-			NewBalance:  currentUserBalance, // Show current balance even on failure
+			Message:     fmt.Sprintf("Insufficient funds. Your balance is %.2f credits.", currentUserBalanceInTx),
+			NewBalance:  currentUserBalanceInTx, // Show actual current balance from Tx
 			BetAmount:   betAmount,
 			ChickenName: selectedChicken.Name,
 		})
-		return
+		return // Defer will rollback
 	}
 
-	// Get active race ID
-	activeRaceID, err := getActiveRaceID(tx) // Use the transaction
-	if err != nil {
-		log.Printf("placeBetHandler: Could not determine active race: %v", err)
-		msg := "Failed to determine active race for betting. Please try again later."
-		if strings.Contains(err.Error(), "no active race available") {
-			msg = "No races are currently open for betting. Please check back later."
-		}
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: msg})
-		return
-	}
-	log.Printf("placeBetHandler: Active Race ID for bet: %d", activeRaceID)
-
-
-	// Get 'Pending' status ID
 	pendingStatusID, err := getPendingBetStatusID(tx) // Use the transaction
 	if err != nil {
 		log.Printf("placeBetHandler: Could not determine pending bet status: %v", err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "System error: Bet status configuration issue."})
-		return
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "System error: Bet status configuration issue.", NewBalance: currentUserBalanceInTx})
+		return // Defer will rollback
 	}
-	log.Printf("placeBetHandler: Pending Bet Status ID: %d", pendingStatusID)
-
-
-	newBalance := currentUserBalance - betAmount
+	
+	newBalance := currentUserBalanceInTx - betAmount
 	_, err = tx.Exec("UPDATE users SET balance = ? WHERE id = ?", newBalance, currentUserID)
 	if err != nil {
 		log.Printf("placeBetHandler: Error updating user balance: %v", err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to update balance."})
-		return
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to update balance.", NewBalance: currentUserBalanceInTx})
+		return // Defer will rollback
 	}
 
-
-	potentialPayout := betAmount * selectedChicken.Odds // selectedChicken is already fetched
-
-	// Insert the bet with race_id, bet_status_id, and potential_payout
+	potentialPayout := betAmount * selectedChicken.Odds
 	_, err = tx.Exec("INSERT INTO bets (user_id, race_id, chicken_id, bet_amount, bet_status_id, potential_payout) VALUES (?, ?, ?, ?, ?, ?)",
-		currentUserID, activeRaceID, chickenID, betAmount, pendingStatusID, potentialPayout) // Added potentialPayout
+		currentUserID, activeRaceID, chickenID, betAmount, pendingStatusID, potentialPayout)
 	if err != nil {
-		log.Printf("placeBetHandler: Error inserting bet: %v", err) // This was the original error point
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to record bet."})
-		return
+		log.Printf("placeBetHandler: Error inserting bet: %v", err) 
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to record bet.", NewBalance: currentUserBalanceInTx}) // Show balance before deduction attempt
+		return // Defer will rollback
 	}
 	
-
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("placeBetHandler: Error committing transaction: %v", err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to finalize bet."})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to finalize bet.", NewBalance: currentUserBalanceInTx}) // Show balance before deduction attempt
 		return
 	}
 	committed = true
@@ -1566,10 +1575,9 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 		ChickenName: selectedChicken.Name,
 	}
 
-	err = betResponseTemplate.Execute(w, response)
-	if err != nil {
-		log.Printf("placeBetHandler: Failed to render success response: %v", err)
-		// Bet was placed, but response failed. Send plain error to client.
+	errTmpl := betResponseTemplate.Execute(w, response)
+	if errTmpl != nil {
+		log.Printf("placeBetHandler: Failed to render success response: %v", errTmpl)
 		http.Error(w, "Internal Server Error (bet placed, but response failed to render)", http.StatusInternalServerError)
 	}
 }
@@ -1579,8 +1587,6 @@ func main() {
 		log.Fatal("Database not initialized (db is nil in main). Exiting.")
 		return
 	}
-	// Defer db.Close() should be after successful opening, init_database handles its own closure on error.
-	// If init_database returns a valid db, then we defer its close here.
 	defer func() {
 		if db != nil {
 			log.Println("Closing database connection.")
