@@ -102,6 +102,39 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 // nextRaceInfoHandler provides HTMX updates for the race timer/status display.
 func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
+	// --- 1. Get User ID ---
+	// This is CRUCIAL. You need a reliable way to get the current user's ID.
+	// For now, I'll use a placeholder like in homeHandler, but this
+	// MUST be replaced with your actual session/authentication logic.
+	// Example: currentUserID := app.sessionManager.GetInt(r.Context(), "userID")
+	var currentUserID int = 1 // <<<< --- !!! PLACEHOLDER: Replace with actual User ID from session/request context !!! --- >>>
+	// If you have a session manager:
+	// currentUserID = sessionManager.GetInt(r.Context(), "userID") // Assuming sessionManager is accessible
+
+	var currentUserBalance float64
+	userLoggedIn := false
+
+	if currentUserID != 0 {
+		// --- 2. Fetch User Balance Correctly ---
+		errDb := db.QueryRow("SELECT balance FROM users WHERE id = ?", currentUserID).Scan(&currentUserBalance)
+		if errDb != nil {
+			if errDb == sql.ErrNoRows {
+				log.Printf("nextRaceInfoHandler: User ID %d not found when fetching balance.", currentUserID)
+				// currentUserBalance remains 0.0, userLoggedIn remains false
+			} else {
+				log.Printf("nextRaceInfoHandler: Error fetching balance for user ID %d: %v", currentUserID, errDb)
+				// currentUserBalance remains 0.0, userLoggedIn remains false
+			}
+		} else {
+			// Balance fetched successfully
+			userLoggedIn = true
+		}
+	} else {
+		log.Println("nextRaceInfoHandler: No user ID found (or user is guest), not fetching balance.")
+		// currentUserBalance remains 0.0, userLoggedIn remains false
+	}
+
+	// --- Race Logic (copied from your existing code, assumed correct) ---
 	raceMutex.Lock()
 	localNextRaceStartTime := nextRaceStartTime
 	localCurrentRaceDetails := currentRaceDetails
@@ -119,20 +152,15 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 		countdownStr = "Running!"
 	} else if !localNextRaceStartTime.IsZero() && localNextRaceStartTime.After(time.Now()) {
 		durationUntilNext := time.Until(localNextRaceStartTime)
-
-		// IMPORTANT FIX: Handle unreasonably long durations
 		if durationUntilNext > 10*time.Minute {
 			log.Printf("nextRaceInfoHandler: Detected abnormally long time until next race: %v", durationUntilNext)
 			countdownStr = "Soon™"
 			statusMsg = "Next race:"
 			raceNameDisplay = "Schedule being fixed..."
-
-			// Trigger a background cleanup (don't block the handler)
 			go func() {
 				if err := cleanupStaleScheduledRaces(db); err != nil {
 					log.Printf("nextRaceInfoHandler: Background cleanup failed: %v", err)
 				}
-				// Force rescheduling
 				if raceTicker != nil {
 					raceTicker.Reset(100 * time.Millisecond)
 				}
@@ -161,31 +189,44 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 		statusMsg = "Last race finished:"
 		raceNameDisplay = fmt.Sprintf("%s (Winner: %s)", localCurrentRaceDetails.Name, localCurrentRaceDetails.Winner)
 		countdownStr = "Next one soon..."
-		_, err := getActiveRaceID(db)
-		isBettingOpen = (err == nil)
+		// Betting generally closed right after a race, check if a new one is immediately scheduled
+		// _, err := getActiveRaceID(db)
+		// isBettingOpen = (err == nil) // This might open betting too soon.
+		isBettingOpen = false // More reliably, betting is closed until next race explicitly allows it.
 	} else {
 		countdownStr = "--:--"
 		statusMsg = "Checking schedule..."
 		raceNameDisplay = "No active race"
-		_, err := getActiveRaceID(db)
-		isBettingOpen = (err == nil)
+		isBettingOpen = false // Default to closed
 	}
+	// --- End of Race Logic ---
 
+	// --- 3. Populate Data Struct ---
 	data := struct {
-		CountdownStr  string
-		StatusMsg     string
-		RaceName      string
-		IsBettingOpen bool
-		IsRaceRunning bool
+		CountdownStr       string
+		StatusMsg          string
+		RaceName           string
+		IsBettingOpen      bool
+		IsRaceRunning      bool
+		UserLoggedIn       bool    // Now correctly determined
+		CurrentUserBalance float64 // Now correctly fetched
 	}{
-		CountdownStr:  countdownStr,
-		StatusMsg:     statusMsg,
-		RaceName:      raceNameDisplay,
-		IsBettingOpen: isBettingOpen,
-		IsRaceRunning: isRaceRunning,
+		CountdownStr:       countdownStr,
+		StatusMsg:          statusMsg,
+		RaceName:           raceNameDisplay,
+		IsBettingOpen:      isBettingOpen,
+		IsRaceRunning:      isRaceRunning,
+		UserLoggedIn:       userLoggedIn,       // Use the determined value
+		CurrentUserBalance: currentUserBalance, // Use the fetched value
 	}
 
 	w.Header().Set("Content-Type", "text/html")
+	// Ensure raceInfoTemplate is parsed and includes the OOB swap for balance
+	if raceInfoTemplate == nil {
+		log.Fatal("nextRaceInfoHandler: raceInfoTemplate is nil!") // Should be initialized at startup
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	err := raceInfoTemplate.Execute(w, data)
 	if err != nil {
 		log.Printf("nextRaceInfoHandler: Error executing template: %v", err)

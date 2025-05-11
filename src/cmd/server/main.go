@@ -17,12 +17,12 @@ import (
 
 // Constants
 const (
-	local_port          string        = "6969"
-	raceInterval                      = 1 * time.Minute
-	raceDuration                      = 20 * time.Second
-	RaceStatusScheduled string        = "Scheduled"
-	RaceStatusRunning   string        = "Running"
-	RaceStatusFinished  string        = "Finished"
+	local_port          string = "6969"
+	raceInterval               = 1 * time.Minute
+	raceDuration               = 20 * time.Second
+	RaceStatusScheduled string = "Scheduled"
+	RaceStatusRunning   string = "Running"
+	RaceStatusFinished  string = "Finished"
 )
 
 // Global Variables
@@ -136,6 +136,11 @@ func init() {
 				Betting is Closed
 			{{end}}
 		</span>
+		{{if .UserLoggedIn }}
+		<span id="user-balance-display" hx-swap-oob="innerHTML">
+			{{printf "%.2f" .CurrentUserBalance}}
+		</span>
+		{{end}}
 	`))
 	log.Println("Templates loaded successfully")
 }
@@ -166,13 +171,13 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// Handlers are now in their respective files but part of 'package main'
-	http.HandleFunc("/", homeHandler)                     // race_handler.go
-	http.HandleFunc("/login", loginHandler)               // auth_handler.go
-	http.HandleFunc("/signup", signupHandler)             // auth_handler.go
-	http.HandleFunc("/select-chicken/", selectChickenHandler) // bet_handler.go
-	http.HandleFunc("/calculate-winnings", calculateWinningsHandler) // bet_handler.go
-	http.HandleFunc("/place-bet", placeBetHandler)        // bet_handler.go
-	http.HandleFunc("/next-race-info", nextRaceInfoHandler) // race_handler.go
+	http.HandleFunc("/", homeHandler)                                    // race_handler.go
+	http.HandleFunc("/login", loginHandler)                              // auth_handler.go
+	http.HandleFunc("/signup", signupHandler)                            // auth_handler.go
+	http.HandleFunc("/select-chicken/", selectChickenHandler)            // bet_handler.go
+	http.HandleFunc("/calculate-winnings", calculateWinningsHandler)     // bet_handler.go
+	http.HandleFunc("/place-bet", placeBetHandler)                       // bet_handler.go
+	http.HandleFunc("/next-race-info", nextRaceInfoHandler)              // race_handler.go
 	http.HandleFunc("/admin/trigger-race-cycle", handleTriggerRaceCycle) // race_handler.go
 
 	fmt.Printf("Server starting on http://localhost:%s\n", local_port)
