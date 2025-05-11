@@ -42,3 +42,9 @@
 </html>
 {{define "css"}}
 {{end}}
+{{define "user-info"}}
+<div id="user-info">
+    <span>Welcome, {{.UserData.Name}}</span>
+    <span>Balance: $<span class="user-balance">{{printf "%.2f" .UserBalance}}</span></span>
+</div>
+{{end}}
