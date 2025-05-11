@@ -116,9 +116,28 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 		raceNameDisplay = localCurrentRaceDetails.Name
 		isRaceRunning = true
 		isBettingOpen = false
+		countdownStr = "Running!"
 	} else if !localNextRaceStartTime.IsZero() && localNextRaceStartTime.After(time.Now()) {
 		durationUntilNext := time.Until(localNextRaceStartTime)
-		if durationUntilNext > 0 {
+
+		// IMPORTANT FIX: Handle unreasonably long durations
+		if durationUntilNext > 10*time.Minute {
+			log.Printf("nextRaceInfoHandler: Detected abnormally long time until next race: %v", durationUntilNext)
+			countdownStr = "Soon™"
+			statusMsg = "Next race:"
+			raceNameDisplay = "Schedule being fixed..."
+
+			// Trigger a background cleanup (don't block the handler)
+			go func() {
+				if err := cleanupStaleScheduledRaces(db); err != nil {
+					log.Printf("nextRaceInfoHandler: Background cleanup failed: %v", err)
+				}
+				// Force rescheduling
+				if raceTicker != nil {
+					raceTicker.Reset(100 * time.Millisecond)
+				}
+			}()
+		} else if durationUntilNext > 0 {
 			minutes := int(durationUntilNext.Minutes())
 			seconds := int(durationUntilNext.Seconds()) % 60
 			countdownStr = fmt.Sprintf("%02d:%02d", minutes, seconds)

@@ -140,13 +140,17 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
 	if r.Method != http.MethodPost {
+		log.Printf("placeBetHandler: Denied %s request.", r.Method)
 		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Method not allowed", NewBalance: -1})
 		return
 	}
 
 	currentUserID := 1 // <<< --- !!! PLACEHOLDER: Replace with actual User ID from session !!! --- >>>
 	var userCurrentBalanceForErrorDisplay float64 = -1
+	// Fetch initial balance for error display if needed, outside transaction for non-critical info
+	// This is a bit redundant as we fetch it again in TX, but okay for display purposes.
 	if currentUserID != 0 {
+		// Best effort, don't fail hard here if this query fails
 		_ = db.QueryRow("SELECT balance FROM users WHERE id = ?", currentUserID).Scan(&userCurrentBalanceForErrorDisplay)
 	}
 
@@ -180,7 +184,7 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var selectedChicken Chicken
 	foundChicken := false
-	for _, ch := range availableChickens {
+	for _, ch := range availableChickens { // Ensure availableChickens is loaded
 		if ch.ID == chickenID {
 			selectedChicken = ch
 			foundChicken = true
@@ -189,14 +193,16 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if !foundChicken {
 		log.Printf("placeBetHandler: Chicken with ID %d not found in availableChickens list.", chickenID)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: fmt.Sprintf("The selected chicken (ID: %d) is not available for betting.", chickenID), NewBalance: userCurrentBalanceForErrorDisplay})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: fmt.Sprintf("The selected chicken (ID: %d) is not available for betting. (Is availableChickens cache up to date?)", chickenID), NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
+	log.Printf("placeBetHandler: User %d attempting to bet %.2f on chicken ID %d (%s, Odds: %.2f)", currentUserID, betAmount, selectedChicken.ID, selectedChicken.Name, selectedChicken.Odds)
 
+	// Transaction starts here
 	tx, err := db.Begin()
 	if err != nil {
 		log.Printf("placeBetHandler: Failed to begin transaction: %v", err)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Database error. Please try again later.", NewBalance: userCurrentBalanceForErrorDisplay})
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Database error (begin tx). Please try again later.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
 	committed := false
@@ -204,16 +210,16 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 		if !committed {
 			errRollback := tx.Rollback()
 			if errRollback != nil {
-				log.Printf("placeBetHandler: Error rolling back transaction: %v", errRollback)
+				log.Printf("placeBetHandler: Error rolling back transaction: %v (Original failure should be logged above)", errRollback)
 			} else {
-				log.Println("placeBetHandler: Transaction rolled back.")
+				log.Println("placeBetHandler: Transaction successfully rolled back due to an earlier error (see logs above).")
 			}
 		}
 	}()
 
 	activeRaceID, err := getActiveRaceID(tx)
 	if err != nil {
-		log.Printf("placeBetHandler: Could not determine active race for betting: %v", err)
+		log.Printf("placeBetHandler: Error from getActiveRaceID: %v. Rolling back.", err)
 		msg := "Failed to determine active race. Please try again."
 		if strings.Contains(err.Error(), "no race currently scheduled") {
 			msg = "No races are currently open for betting."
@@ -221,29 +227,31 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: msg, NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
+	log.Printf("placeBetHandler: Active race for betting determined as ID %d.", activeRaceID)
 
 	var raceStatus string
 	err = tx.QueryRow("SELECT status FROM races WHERE id = ?", activeRaceID).Scan(&raceStatus)
 	if err != nil {
-		// ... (error handling as before)
+		log.Printf("placeBetHandler: Error scanning race status for race ID %d: %v. Rolling back.", activeRaceID, err)
 		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Error confirming race status.", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
 	if raceStatus != RaceStatusScheduled {
-		// ... (error handling as before)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Betting for this race has closed.", NewBalance: userCurrentBalanceForErrorDisplay})
+		log.Printf("placeBetHandler: Race ID %d status is '%s', not '%s'. Betting closed for this race. Rolling back.", activeRaceID, raceStatus, RaceStatusScheduled)
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Betting for this race has closed (Status not 'Scheduled').", NewBalance: userCurrentBalanceForErrorDisplay})
 		return
 	}
+	log.Printf("placeBetHandler: Race ID %d status is '%s', OK for betting.", activeRaceID, raceStatus)
 
 	var currentUserBalanceInTx float64
 	err = tx.QueryRow("SELECT balance FROM users WHERE id = ?", currentUserID).Scan(&currentUserBalanceInTx)
 	if err != nil {
-		// ... (error handling as before)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Error fetching user balance."})
+		log.Printf("placeBetHandler: Error scanning user balance for user ID %d: %v. Rolling back.", currentUserID, err)
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Error fetching user balance.", NewBalance: -1}) // Pass -1 as balance couldn't be fetched
 		return
 	}
-
 	if currentUserBalanceInTx < betAmount {
+		log.Printf("placeBetHandler: User %d has insufficient funds (%.2f) for bet amount %.2f. Rolling back.", currentUserID, currentUserBalanceInTx, betAmount)
 		_ = betResponseTemplate.Execute(w, BetResponse{
 			Success:     false,
 			Message:     fmt.Sprintf("Insufficient funds. Your balance is %.2f credits.", currentUserBalanceInTx),
@@ -253,35 +261,43 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+	log.Printf("placeBetHandler: User %d balance %.2f is sufficient for bet amount %.2f.", currentUserID, currentUserBalanceInTx, betAmount)
 
 	pendingStatusID, err := getPendingBetStatusID(tx)
 	if err != nil {
+		log.Printf("placeBetHandler: Error from getPendingBetStatusID: %v. Rolling back.", err)
 		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "System error: Bet status config.", NewBalance: currentUserBalanceInTx})
 		return
 	}
+	log.Printf("placeBetHandler: Pending bet status ID: %d.", pendingStatusID)
 
 	newBalance := currentUserBalanceInTx - betAmount
 	_, err = tx.Exec("UPDATE users SET balance = ? WHERE id = ?", newBalance, currentUserID)
 	if err != nil {
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to update balance.", NewBalance: currentUserBalanceInTx})
+		log.Printf("placeBetHandler: Error executing UPDATE users for user ID %d to balance %.2f: %v. Rolling back.", currentUserID, newBalance, err)
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to update balance.", NewBalance: currentUserBalanceInTx}) // Show old balance
 		return
 	}
+	log.Printf("placeBetHandler: Successfully updated user %d balance to %.2f.", currentUserID, newBalance)
 
 	potentialPayout := betAmount * selectedChicken.Odds
 	_, err = tx.Exec("INSERT INTO bets (user_id, race_id, chicken_id, bet_amount, bet_status_id, potential_payout) VALUES (?, ?, ?, ?, ?, ?)",
 		currentUserID, activeRaceID, chickenID, betAmount, pendingStatusID, potentialPayout)
 	if err != nil {
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to record bet.", NewBalance: currentUserBalanceInTx})
+		log.Printf("placeBetHandler: Error executing INSERT INTO bets for user %d, race ID %d, chicken ID %d, amount %.2f: %v. Rolling back.", currentUserID, activeRaceID, chickenID, betAmount, err)
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to record bet.", NewBalance: currentUserBalanceInTx}) // Show old balance as TX will rollback user update too
 		return
 	}
+	log.Printf("placeBetHandler: Successfully inserted bet for user %d, race %d, chicken %d.", currentUserID, activeRaceID, chickenID)
 
 	err = tx.Commit()
 	if err != nil {
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to finalize bet.", NewBalance: currentUserBalanceInTx})
+		log.Printf("placeBetHandler: Error committing transaction: %v. Rolling back (implicitly by defer).", err)
+		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Failed to finalize bet. Please try again.", NewBalance: currentUserBalanceInTx})
 		return
 	}
-	committed = true
-	log.Printf("placeBetHandler: Bet successfully placed for user %d on chicken %d (Race %d) for amount %.2f. New balance: %.2f", currentUserID, chickenID, activeRaceID, betAmount, newBalance)
+	committed = true // Set committed to true ONLY after successful commit
+	log.Printf("placeBetHandler: Bet successfully placed and transaction committed for user %d on chicken %d (Race %d) for amount %.2f. New balance: %.2f", currentUserID, chickenID, activeRaceID, betAmount, newBalance)
 
 	response := BetResponse{
 		Success:     true,
@@ -294,5 +310,6 @@ func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 	errTmpl := betResponseTemplate.Execute(w, response)
 	if errTmpl != nil {
 		log.Printf("placeBetHandler: Failed to render success response: %v", errTmpl)
+		// Note: The bet is already committed at this point. This is a rendering error.
 	}
 }
