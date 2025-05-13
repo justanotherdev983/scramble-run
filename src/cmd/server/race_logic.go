@@ -167,6 +167,9 @@ func startRace(db *sql.DB, raceID int) error {
 	nextRaceStartTime = time.Time{}
 	raceMutex.Unlock()
 
+	// Initialize race animation
+	initRaceAnimation(raceID, currentRaceDetails.Name)
+
 	if raceEndTimer != nil {
 		raceEndTimer.Stop()
 	}
@@ -224,6 +227,9 @@ func finishRace(db *sql.DB, raceID int) error {
 
 	winnerChicken := availableChickens[rand.Intn(len(availableChickens))]
 	log.Printf("Race ID: %d finished. Winner: %s (ID: %d)", raceID, winnerChicken.Name, winnerChicken.ID)
+
+	// Finish race animation with winner
+	finishRaceAnimation(winnerChicken.ID)
 
 	tx, errTx := db.Begin()
 	if errTx != nil {

@@ -9,7 +9,7 @@ import (
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	currentUserID := 1 // <<<< --- !!! PLACEHOLDER: Replace with actual User ID from session !!! --- >>>
+	currentUserID := 1 // <<<< --- !!! !!! --- >>>
 	var currentUser User
 	var userBalance float64
 
@@ -31,29 +31,28 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		userBalance = 0
 	}
 
-	data := PageData{
-		Title:             "Scramble Run",
-		UserData:          currentUser,
-		UserBalance:       userBalance,
-		Races:             get_races(db),
-		Chickens:          availableChickens,
-		ActiveRace:        ActiveRace{Chickens: availableChickens},
-		PotentialWinnings: 0.0,
-	}
-
 	raceMutex.Lock()
 	pageNextRaceStartTime := nextRaceStartTime
-	pageCurrentRaceDetails := currentRaceDetails
+	pageCurrentRaceDetails := currentRaceDetails // This is *RaceInfo
 	raceMutex.Unlock()
 
 	var calculatedTimeStr, calculatedStatusMsg, calculatedRaceName string
 	isBettingInitiallyOpen := false
+	var initialTrackRaceStatus string
+
+	// Variables to hold the values for the new PageData fields
+	isRaceActuallyFinished := false
+	var actualWinnerID int // Assuming Chicken ID is int
 
 	if pageCurrentRaceDetails != nil && pageCurrentRaceDetails.Status == RaceStatusRunning {
 		calculatedStatusMsg = "Race in Progress:"
 		calculatedRaceName = pageCurrentRaceDetails.Name
 		calculatedTimeStr = "Running!"
 		isBettingInitiallyOpen = false
+		initialTrackRaceStatus = RaceStatusRunning
+		// Race is running, not finished yet
+		isRaceActuallyFinished = false
+		actualWinnerID = 0 // No winner yet
 	} else if !pageNextRaceStartTime.IsZero() && pageNextRaceStartTime.After(time.Now()) {
 		durationUntilNext := time.Until(pageNextRaceStartTime)
 		if durationUntilNext > 0 {
@@ -68,35 +67,117 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 				calculatedRaceName = nextRaceNameDB
 			}
 			isBettingInitiallyOpen = true
+			initialTrackRaceStatus = RaceStatusScheduled
 		} else {
 			calculatedTimeStr = "Starting..."
 			calculatedStatusMsg = "Next race:"
 			calculatedRaceName = "Get Ready!"
 			isBettingInitiallyOpen = false
+			initialTrackRaceStatus = RaceStatusScheduled
 		}
+		// Upcoming race, so previous race (if any) might be finished, but this block is for "next race"
+		// We determine RaceFinished based on pageCurrentRaceDetails status if it's "Finished"
+		if pageCurrentRaceDetails != nil && pageCurrentRaceDetails.Status == RaceStatusFinished {
+			isRaceActuallyFinished = true
+			// === How to get Winner ID? ===
+			// Option A: If RaceInfo struct has WinnerChickenID
+			// actualWinnerID = pageCurrentRaceDetails.WinnerChickenID
+
+			// Option B: If RaceInfo.Winner is the NAME, and you need to look up the ID
+			// from availableChickens or by another DB query (less ideal for handler).
+			// For now, let's assume you have a way to get this ID. If not, the template logic needs adjustment.
+			// If `pageCurrentRaceDetails.Winner` (string name) is reliable:
+			if pageCurrentRaceDetails.Winner != "" {
+				// Find the chicken in availableChickens that matches the winner name
+				for _, chk := range availableChickens { // availableChickens should be populated by this point
+					if chk.Name == pageCurrentRaceDetails.Winner {
+						actualWinnerID = chk.ID // Assuming chk.ID is int
+						break
+					}
+				}
+				if actualWinnerID == 0 {
+					log.Printf("homeHandler: Could not find ID for winner name '%s' in availableChickens", pageCurrentRaceDetails.Winner)
+				}
+			}
+		}
+
 	} else if pageCurrentRaceDetails != nil && pageCurrentRaceDetails.Status == RaceStatusFinished {
 		calculatedStatusMsg = "Last race finished:"
+		// pageCurrentRaceDetails.Winner is a string (name)
 		calculatedRaceName = fmt.Sprintf("%s (Winner: %s)", pageCurrentRaceDetails.Name, pageCurrentRaceDetails.Winner)
 		calculatedTimeStr = "Next one soon..."
 		_, errActiveRace := getActiveRaceID(db)
-		isBettingInitiallyOpen = (errActiveRace == nil)
-	} else {
+		isBettingInitiallyOpen = errActiveRace == nil // Or perhaps false until next race countdown starts
+		initialTrackRaceStatus = RaceStatusFinished
+
+		// Race is finished
+		isRaceActuallyFinished = true
+		// === How to get Winner ID? (Same logic as above) ===
+		if pageCurrentRaceDetails.Winner != "" {
+			for _, chk := range availableChickens {
+				if chk.Name == pageCurrentRaceDetails.Winner {
+					actualWinnerID = chk.ID
+					break
+				}
+			}
+			if actualWinnerID == 0 {
+				log.Printf("homeHandler: Could not find ID for winner name '%s' in availableChickens (finished block)", pageCurrentRaceDetails.Winner)
+			}
+		}
+
+	} else { // No current race, no next race imminently, or error
 		calculatedTimeStr = "--:--"
 		calculatedStatusMsg = "Checking schedule..."
 		_, errActiveRace := getActiveRaceID(db)
-		isBettingInitiallyOpen = (errActiveRace == nil)
+		if errActiveRace == nil {
+			initialTrackRaceStatus = RaceStatusScheduled
+			isBettingInitiallyOpen = true
+		} else {
+			initialTrackRaceStatus = RaceStatusNoRace
+			isBettingInitiallyOpen = false
+		}
+		// No race active/finished to determine winner from
+		isRaceActuallyFinished = false
+		actualWinnerID = 0
 	}
 
-	data.InitialNextRaceTime = calculatedTimeStr
-	data.InitialStatusMessage = calculatedStatusMsg
-	data.InitialRaceName = calculatedRaceName
-	data.IsBettingInitiallyOpen = isBettingInitiallyOpen
-	data.CurrentRaceDisplay = pageCurrentRaceDetails
+	var activeRaceForTemplate ActiveRace
+	// Ensure availableChickens is populated *before* trying to find winner ID from it
+	// availableChickens is used for ActiveRace.Chickens and for betting options
+	// It should represent the chickens participating in the *current* or *next* race
+	// This might be different from the chickens that participated in a *past* finished race.
+	// For simplicity, the current availableChickens list is used to find the winner.
+	// This assumes the winner of the last race is among the currently "available" chickens,
+	// which might be true if they are persistent.
+	activeRaceForTemplate = ActiveRace{Chickens: availableChickens}
+
+	data := PageData{
+		Title:                  "Scramble Run",
+		UserData:               currentUser,
+		UserBalance:            userBalance,
+		Races:                  get_races(db),         // History
+		Chickens:               availableChickens,     // For betting panel
+		ActiveRace:             activeRaceForTemplate, // For track display
+		PotentialWinnings:      0.0,
+		InitialNextRaceTime:    calculatedTimeStr,
+		InitialStatusMessage:   calculatedStatusMsg,
+		InitialRaceName:        calculatedRaceName,
+		IsBettingInitiallyOpen: isBettingInitiallyOpen,
+		CurrentRaceDisplay:     pageCurrentRaceDetails, // Info about the just-finished/running race
+		RaceStatus:             initialTrackRaceStatus, // For data-race-status on track
+
+		// Populate the new fields
+		RaceFinished: isRaceActuallyFinished,
+		WinnerID:     actualWinnerID,
+		// Message and Success are likely for form post responses, initialize if needed
+		Message: "",
+		Success: false,
+	}
 
 	err := homeTemplate.ExecuteTemplate(w, "base.gohtml", data)
 	if err != nil {
 		log.Printf("homeHandler: Template execution error: %v", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+
 	}
 }
 

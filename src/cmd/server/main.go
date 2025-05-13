@@ -23,6 +23,7 @@ const (
 	RaceStatusScheduled string = "Scheduled"
 	RaceStatusRunning   string = "Running"
 	RaceStatusFinished  string = "Finished"
+	RaceStatusNoRace    string = "NoRace"
 )
 
 // Global Variables
@@ -179,6 +180,9 @@ func main() {
 	http.HandleFunc("/place-bet", placeBetHandler)                       // bet_handler.go
 	http.HandleFunc("/next-race-info", nextRaceInfoHandler)              // race_handler.go
 	http.HandleFunc("/admin/trigger-race-cycle", handleTriggerRaceCycle) // race_handler.go
+
+	// Add the new race update handler
+	http.HandleFunc("/race-update", raceUpdateHandler) // race_animation.go
 
 	fmt.Printf("Server starting on http://localhost:%s\n", local_port)
 	err := http.ListenAndServe(":"+local_port, nil)

@@ -49,21 +49,26 @@ type User struct {
 type PageData struct {
 	Title       string
 	UserData    User
-	UserBalance float64    // ADDED: To display user's current balance
-	Races       []RaceInfo
-	Chickens    []Chicken
-	ActiveRace  ActiveRace
+	UserBalance float64
+	Races       []RaceInfo // This is for the history list
+	Chickens    []Chicken  // This is availableChickens for betting selection
+	ActiveRace  ActiveRace // This is for displaying chickens on the track
 
-	// For initial rendering by homeHandler, HTMX will take over for subsequent updates
-	InitialNextRaceTime     string    // Formatted string: "MM:SS" or status message
-	InitialStatusMessage    string    // e.g., "Next race in:", "Race in Progress:"
-	InitialRaceName         string    // Name of the current/next race for initial display
-	IsBettingInitiallyOpen  bool      // Betting status for initial display
-	CurrentRaceDisplay      *RaceInfo // Still useful for other race details if needed
+	InitialNextRaceTime    string
+	InitialStatusMessage   string
+	InitialRaceName        string
+	IsBettingInitiallyOpen bool
+	CurrentRaceDisplay     *RaceInfo // Details of the current/last race from race manager
 
 	PotentialWinnings float64
-	Message           string
-	Success           bool
+	Message           string // For bet responses, etc. (Good to have)
+	Success           bool   // For bet responses, etc. (Good to have)
+
+	RaceStatus string // Overall status for the track display (Scheduled, Running, Finished, NoRace)
+
+	// ADD THESE FIELDS:
+	RaceFinished bool
+	WinnerID     int // Or string, if your Chicken IDs are strings. Must match type of Chicken.ID
 }
 
 // WinningsCalc is used for calculating and displaying potential winnings.
