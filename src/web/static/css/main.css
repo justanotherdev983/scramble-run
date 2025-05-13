@@ -85,20 +85,16 @@ body {
     font-size: var(--font-size-lg);
     font-weight: 700;
     text-decoration: none;
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: white;
     white-space: nowrap;
     padding: var(--spacing-xs) 0;
     display: flex;
     align-items: center;
 }
 
-.logo::before {
-    content: "🐔";
+.logo img {
+    height: 2em;
     margin-right: var(--spacing-xs);
-    font-size: 1.2em;
 }
 
 .nav-menu {

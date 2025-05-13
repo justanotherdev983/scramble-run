@@ -1,10 +1,246 @@
 {{define "css"}}
-    <link rel="stylesheet" href="/static/css/main.css" />
+    <link rel="stylesheet" href="/static/css/main.css" /> <!-- Your existing main CSS -->
+    <style>
+        /* Landing Page Specific Styles */
+        body {
+            font-family: 'Arial', sans-serif; /* Or your preferred font */
+            background-color: #252842; /* Light background */
+            color: #333;
+            line-height: 1.6;
+        }
 
+        .landing-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Engaging gradient */
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            border-bottom-left-radius: 150px 20px; /* Subtle curve */
+            border-bottom-right-radius: 150px 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .landing-hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .landing-hero .chicken-icon {
+            font-size: 4rem; /* Make chicken icon prominent */
+            display: block;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+
+        .landing-hero p {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .landing-cta-button {
+            background-color: #ffd700; /* Gold accent */
+            color: #333;
+            padding: 15px 35px;
+            text-decoration: none;
+            border-radius: 50px; /* Pill shape */
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            margin: 0 10px;
+        }
+
+        .landing-cta-button:hover {
+            background-color: #ffc400;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .landing-cta-button.secondary {
+            background-color: transparent;
+            border: 2px solid #ffd700;
+            color: #ffd700; /* Or white if on dark bg */
+        }
+        .landing-hero .landing-cta-button.secondary {
+            color: white;
+            border-color: white;
+        }
+        .landing-hero .landing-cta-button.secondary:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+
+
+        .landing-features {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin: 20px;
+            width: calc(33.333% - 40px); /* Adjust for responsiveness */
+            min-width: 280px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-card .icon {
+            font-size: 3rem;
+            color: #667eea; /* Theme color */
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        .landing-footer {
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 40px;
+            background-color: #333;
+            color: #252842;
+        }
+        .landing-footer p {
+            margin: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .feature-card {
+                width: calc(50% - 40px);
+            }
+        }
+        @media (max-width: 768px) {
+            .landing-hero h1 {
+                font-size: 2.8rem;
+            }
+            .landing-hero p {
+                font-size: 1.2rem;
+            }
+            .landing-cta-button {
+                padding: 12px 25px;
+                font-size: 1rem;
+                display: block;
+                margin: 10px auto;
+                width: fit-content;
+            }
+            .feature-card {
+                width: calc(100% - 40px);
+            }
+        }
+
+    </style>
 {{end}}
 
 {{define "content"}}
-    <div>
-        woop woop
+    <div class="landing-page-container">
+
+        <section class="landing-hero">
+            <span class="chicken-icon">🐔</span>
+            <h1>Welcome to Scramble Run!</h1>
+            <p>The most exciting virtual chicken racing game on the web. Place your bets, watch the feathers fly, and win big!</p>
+            <div>
+
+                {{if eq .UserData.Name "Guest"}} <!-- Or however you identify a non-logged-in user -->
+                <a href="/login" class="landing-cta-button">Login</a>
+                <a href="/signup" class="landing-cta-button secondary">Sign Up</a>
+                {{else}}
+                    <a href="/race" class="landing-cta-button">View Live Races</a>
+                    <a href="/singup" class="landing-cta-button secondary">Sing up</a>
+                    <a href="/login" class="landing-cta-button secondary">Log in</a>
+                {{end}}
+            </div>
+        </section>
+
+        <section class="landing-features">
+            <div class="feature-card">
+                <div class="icon">🏁</div>
+                <h3>Live Races</h3>
+                <p>Experience the thrill of real-time chicken races with dynamic odds and unpredictable outcomes. Every second counts!</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">💰</div>
+                <h3>Place Your Bets</h3>
+                <p>Analyze the odds, pick your champion chicken, and place your bets. Strategic betting can lead to big rewards!</p>
+            </div>
+            <div class="feature-card">
+                <div class="icon">🏆</div>
+                <h3>Compete & Win</h3>
+                <p>Track your betting history, climb the leaderboards (TODO), and show off your winnings. Glory awaits the shrewdest bettors!</p>
+            </div>
+        </section>
+
+        <section class="landing-how-it-works" style="text-align: center; padding: 40px 20px; background-color: white; margin: 40px 0;">
+            <h2>How It Works</h2>
+            <div style="max-width: 800px; margin: 20px auto; display: flex; justify-content: space-around; flex-wrap: wrap;">
+                <div style="margin:15px; flex-basis: 200px;">
+                    <div class="icon" style="font-size:2.5rem;">📝</div>
+                    <h4>1. Sign Up</h4>
+                    <p>Create your free account in seconds.</p>
+                </div>
+                <div style="margin:15px; flex-basis: 200px;">
+                    <div class="icon" style="font-size:2.5rem;">🪙</div>
+                    <h4>2. Get Credits</h4>
+                    <p>Start with some free credits to place bets.</p>
+                </div>
+                <div style="margin:15px; flex-basis: 200px;">
+                    <div class="icon" style="font-size:2.5rem;">🐔</div>
+                    <h4>3. Bet on a Chicken</h4>
+                    <p>Choose your favorite in the upcoming race.</p>
+                </div>
+                <div style="margin:15px; flex-basis: 200px;">
+                    <div class="icon" style="font-size:2.5rem;">🎉</div>
+                    <h4>4. Watch & Win!</h4>
+                    <p>Cheer your chicken to victory!</p>
+                </div>
+            </div>
+            {{if eq .UserData.Name "Guest"}}
+                <a href="/signup" class="landing-cta-button" style="margin-top: 20px;">Get Started Now!</a>
+            {{else}}
+                <a href="/races" class="landing-cta-button" style="margin-top: 20px;">Go to Races!</a>
+            {{end}}
+        </section>
+
+        <footer class="landing-footer">
+            <p>© 2025 Scramble Run. All rights reserved. Bet responsibly!</p>
+            <p><small>This is a fictional game for entertainment purposes only.</small></p>
+        </footer>
+
     </div>
+
+    <script>
+        // You can add any landing-page specific JS here if needed
+        // For example, simple animations on scroll, etc.
+        // For now, the CSS handles the chicken bounce.
+    </script>
 {{end}}
