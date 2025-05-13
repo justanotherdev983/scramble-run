@@ -23,6 +23,7 @@ const (
 	RaceStatusScheduled string = "Scheduled"
 	RaceStatusRunning   string = "Running"
 	RaceStatusFinished  string = "Finished"
+	RaceStatusNoRace    string = "NoRace"
 )
 
 // Global Variables

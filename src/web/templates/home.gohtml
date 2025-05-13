@@ -55,11 +55,16 @@
                          id="race-track-container"
                          hx-get="/race-update"
                          hx-trigger="every 0.5s"
-                         hx-swap="innerHTML">
-                        <!-- Initial content, will be replaced by race-update -->
+                         hx-swap="innerHTML"
+                         data-race-status="{{.RaceStatus}}">
                         {{if .ActiveRace}}
                             {{range .ActiveRace.Chickens}}
-                                <div class="chicken" id="chicken-{{.ID}}" data-chicken-id="{{.ID}}" data-chicken-name="{{.Name}}" style="top: {{.Lane}}%; left: {{.Progress}}%; transition: left 0.5s ease-in-out;">
+                                <div class="chicken"
+                                     id="chicken-{{.ID}}"
+                                     data-chicken-id="{{.ID}}"
+                                     data-chicken-name="{{.Name}}"
+                                     {{if and $.RaceFinished (eq $.WinnerID .ID)}}data-winner="true"{{end}}
+                                     style="top: {{.Lane}}%; left: {{.Progress}}%; transition: left 0.5s ease-in-out;">
                                     <div class="chicken-body" style="background-color: {{.Color}}"></div>
                                     <div class="chicken-wing"></div>
                                     <div class="chicken-beak"></div>
@@ -199,6 +204,7 @@
                 </div>
             </div>
         </main>
+    </div>
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
@@ -224,10 +230,13 @@
                 // Race animation handling
                 htmx.on('htmx:afterSwap', function(event) {
                     if (event.detail.target.id === 'race-track-container') {
-                        // Check if there's a winner
+                        // Check if the server has determined the race is finished AND there's a winner
+                        const container = event.detail.target;
+                        const isRaceFinished = container.getAttribute('data-race-status') === 'Finished';
                         const winner = document.querySelector('[data-winner="true"]');
-                        if (winner) {
-                            // Stop polling for updates when we have a winner
+
+                        if (isRaceFinished && winner) {
+                            // Only stop polling when the server confirms the race is finished
                             htmx.remove('#race-track-container', 'hx-trigger');
 
                             // Update race status
