@@ -56,15 +56,15 @@
     /* Font Sizes (mapping old names to new system) */
     --font-size-xs: 0.875rem; /* text-sm */
     --font-size-sm: 0.95rem; /* Custom, between text-sm and base */
-    --font-size-md: 1rem;    /* Base */
-    --font-size-lg: 1.5rem;  /* text-2xl equivalent */
-    --font-size-xl: 2rem;    /* large heading */
+    --font-size-md: 1rem; /* Base */
+    --font-size-lg: 1.5rem; /* text-2xl equivalent */
+    --font-size-xl: 2rem; /* large heading */
 
     --header-height: 70px;
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
     "Helvetica Neue", sans-serif;
     background-color: var(--background);
     color: var(--color-text-primary);
@@ -77,9 +77,9 @@ body {
 /* Layout Components
    ========================================================================== */
 .container {
-    max-width: 1400px; /* From new style guide */
+    max-width: 100vw; /* Increase from 1400px to 95% of viewport width */
     margin: 0 auto;
-    padding: 0 var(--spacing-lg); /* Adjusted for consistency, 1.5rem */
+    padding: 0 var(--spacing-sm); /* Reduce padding from lg to sm */
     width: 100%;
 }
 
@@ -92,7 +92,7 @@ body {
    ========================================================================== */
 .navbar {
     background: rgba(3, 7, 18, 0.8); /* Semi-transparent background from new style */
-    backdrop-filter: blur(10px);     /* Blur effect */
+    backdrop-filter: blur(10px); /* Blur effect */
     border-bottom: 1px solid var(--border); /* New border color */
     position: sticky;
     top: 0;
@@ -172,7 +172,8 @@ body {
     transform: translateY(-2px);
 }
 
-.nav-links a::before { /* Underline effect from new style */
+.nav-links a::before {
+    /* Underline effect from new style */
     content: "";
     position: absolute;
     width: 100%;
@@ -269,7 +270,8 @@ body {
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease, transform var(--transition-speed) ease;
+    transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease, transform
+    var(--transition-speed) ease;
     border: 1px solid var(--border);
     overflow: hidden;
 }
@@ -440,11 +442,45 @@ body {
 
 /* Race Track
    ========================================================================== */
+.racing-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr; /* Three equal columns */
+    gap: var(--spacing-md); /* Gap between components */
+    margin-top: var(--spacing-xl);
+    width: 100%; /* Ensure full width */
+    max-width: 100%; /* Prevent overflow */
+}
+.dashboard-container {
+    width: 95vw !important; /* Force full viewport width with !important */
+    max-width: 95vw !important; /* Ensure no max-width constraints */
+    margin: 0 !important; /* Remove any margin */
+    padding: 0 !important; /* Remove any padding */
+    box-sizing: border-box;
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
+    left: 2vw !important; /* Ensure it starts from the left edge */
+    right: 0 !important; /* Ensure it extends to the right edge */
+    position: relative; /* Add positioning context */
+}
+
+/* Add this new class to target any parent containers that might be constraining width */
+.container,
+.main,
+.race-content,
+.racing-dashboard {
+    max-width: 100vw !important;
+    width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
 .race-track {
     background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    height: 100%; /* Ensure full height */
 }
 
 .track-container {
@@ -455,8 +491,14 @@ body {
     overflow: hidden;
     border: 2px solid var(--primary); /* New primary color for track border */
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
-    background-image: linear-gradient(to right, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.03) 100%),
-    repeating-linear-gradient(to right, transparent, transparent 50px, rgba(255,255,255,0.07) 50px, rgba(255,255,255,0.07) 100px);
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.03) 100%),
+    repeating-linear-gradient(
+            to right,
+            transparent,
+            transparent 50px,
+            rgba(255, 255, 255, 0.07) 50px,
+            rgba(255, 255, 255, 0.07) 100px
+    );
 }
 
 .track-lane {
@@ -467,11 +509,21 @@ body {
 }
 
 /* Generate multiple track lanes */
-.track-lane:nth-child(1) { top: 10%; }
-.track-lane:nth-child(2) { top: 30%; }
-.track-lane:nth-child(3) { top: 50%; }
-.track-lane:nth-child(4) { top: 70%; }
-.track-lane:nth-child(5) { top: 90%; }
+.track-lane:nth-child(1) {
+    top: 10%;
+}
+.track-lane:nth-child(2) {
+    top: 30%;
+}
+.track-lane:nth-child(3) {
+    top: 50%;
+}
+.track-lane:nth-child(4) {
+    top: 70%;
+}
+.track-lane:nth-child(5) {
+    top: 90%;
+}
 
 /* Start and finish lines */
 .track-container::before,
@@ -484,18 +536,20 @@ body {
     z-index: 5;
 }
 
-.track-container::before { /* Start line */
+.track-container::before {
+    /* Start line */
     left: 5%;
     background: repeating-linear-gradient(
             to bottom,
-            var(--foreground), /* Use theme colors */
+            var(--foreground) /* Use theme colors */,
             var(--foreground) 10px,
             var(--background) 10px,
             var(--background) 20px
     );
 }
 
-.track-container::after { /* Finish line */
+.track-container::after {
+    /* Finish line */
     right: 5%;
     background: repeating-linear-gradient(
             to bottom,
@@ -517,8 +571,6 @@ body {
     left: 5%;
 }
 
-
-
 .chicken:nth-child(1) {
     top: calc(30% - 20px); /* 20px is half the chicken's height */
 }
@@ -528,7 +580,6 @@ body {
 .chicken:nth-child(3) {
     top: calc(50% - 20px);
 }
-
 
 .chicken-body {
     position: absolute;
@@ -565,7 +616,8 @@ body {
     z-index: 13;
 }
 
-.chicken-name { /* This class was duplicated, consolidating */
+.chicken-name {
+    /* This class was duplicated, consolidating */
     position: absolute;
     bottom: -20px;
     left: 50%;
@@ -594,11 +646,16 @@ body {
 }
 
 @keyframes pulseWinner {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
-
 
 @keyframes flap {
     0% {
@@ -614,8 +671,9 @@ body {
 .betting-panel {
     background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    height: 100%; /* Ensure full height */
 }
 
 .betting-panel h2 {
@@ -624,7 +682,8 @@ body {
     color: var(--primary); /* New primary color for panel title */
 }
 
-.chicken-list { /* This class was used in race-item too. Ensuring general applicability. */
+.chicken-list {
+    /* This class was used in race-item too. Ensuring general applicability. */
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
@@ -655,8 +714,9 @@ body {
     background-color: rgba(var(--primary-rgb, 37, 99, 235), 0.1); /* Fallback if --primary-rgb not set */
 }
 /* Helper for rgba with CSS var, set this if needed or use fixed values */
-:root { --primary-rgb: 37, 99, 235; }
-
+:root {
+    --primary-rgb: 37, 99, 235;
+}
 
 .chicken-info {
     display: flex;
@@ -664,7 +724,8 @@ body {
     gap: var(--spacing-sm);
 }
 
-.chicken-avatar { /* Used in betting panel */
+.chicken-avatar {
+    /* Used in betting panel */
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 50%;
@@ -674,11 +735,11 @@ body {
 
 /* .chicken-name is already defined globally for track, ensure it doesn't conflict if context changes */
 /* If needed, scope: .chicken-option .chicken-name-display or similar */
-.chicken-option .chicken-name-label { /* Renamed to avoid conflict if structure differs */
+.chicken-option .chicken-name-label {
+    /* Renamed to avoid conflict if structure differs */
     font-weight: 600;
     color: var(--color-text-primary);
 }
-
 
 .chicken-odds {
     color: var(--color-text-secondary);
@@ -776,9 +837,9 @@ body {
 .race-info {
     background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
-    padding: var(--spacing-lg);
-    margin-top: var(--spacing-xl);
+    padding: var(--spacing-md);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    height: 100%; /* Ensure full height */
 }
 
 .race-info h2 {
@@ -790,39 +851,91 @@ body {
 .race-list {
     list-style: none;
     margin-top: var(--spacing-md);
+    max-height: 400px; /* Adjust as needed, e.g., 40vh or specific pixel value */
+    overflow-y: auto;
+    /* Add a little padding on the right to prevent content from hiding under the scrollbar */
+    padding-right: var(--spacing-xs); /* e.g., 0.5rem, adjust if scrollbar is wider */
+}
+
+/* Custom Scrollbar Styling */
+/* For Webkit browsers (Chrome, Safari, newer Edge) */
+.race-list::-webkit-scrollbar {
+    width: 10px; /* Width of the scrollbar */
+}
+
+.race-list::-webkit-scrollbar-track {
+    background: var(--muted); /* Background of the scrollbar track */
+    border-radius: var(--border-radius-lg);
+}
+
+.race-list::-webkit-scrollbar-thumb {
+    background-color: var(--primary); /* Color of the scrollbar thumb */
+    border-radius: var(--border-radius-lg);
+    border: 2px solid var(--muted); /* Creates padding around thumb */
+}
+
+.race-list::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-hover); /* Color of the thumb on hover */
+}
+
+/* For Firefox */
+.race-list {
+    scrollbar-width: thin; /* "auto" or "thin" */
+    scrollbar-color: var(--primary) var(--muted); /* thumb color and track color */
 }
 
 .race-item {
-    background-color: var(--surface-variant-color);
+    background-color: var(--surface-variant-color); /* Slightly different from main surface for card effect */
     padding: var(--spacing-md);
     border-radius: var(--border-radius-sm);
     margin-bottom: var(--spacing-sm);
-    transition: transform var(--transition-speed);
-    border-left: 3px solid var(--primary); /* New primary color for border */
+    /* Each item as a card with a subtle border */
+    border: 1px solid var(--border);
+    transition: transform var(--transition-speed) ease, background-color var(--transition-speed) ease, border-color
+    var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.race-item:last-child {
+    /* Adjust margin for the last item if scrollbar padding isn't enough or looks off */
+    margin-bottom: 4px;
 }
 
 .race-item:hover {
-    transform: translateX(5px);
+    transform: translateY(-3px); /* Lift effect on hover */
+    background-color: var(--surface-hover-color); /* Consistent hover background */
+    border-color: var(--primary); /* Highlight border with primary color */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow for a "lifted card" feel */
 }
 
 .race-item .race-time {
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm); /* Increased spacing below time */
+    display: block; /* Ensure it takes full width for proper margin application */
 }
 
-/* .race-item .chicken-list is already styled by global .chicken-list */
-.race-item .chicken-list-details { /* If specific styling for this context is needed */
-    margin-left: var(--spacing-md);
+/* .race-item .chicken-list is already styled by global .chicken-list if used */
+
+.race-item .chicken-list-details {
+    /* margin-left is removed as parent padding handles overall indentation */
     margin-top: var(--spacing-xs);
     font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
+    color: var(--color-text-secondary); /* Kept from original */
+
+    /* New styling for a more structured look within the card */
+    padding-left: var(--spacing-sm); /* Indent the details block */
+    border-left: 2px solid var(--muted); /* Subtle vertical line to visually group details */
 }
 
+/* Optional: If details are structured with <p> or other block elements */
+.race-item .chicken-list-details > *:last-child {
+    margin-bottom: 0;
+}
 
 /* Responsive Design
    ========================================================================== */
-@media (max-width: 1024px) { /* Corresponds roughly to 'lg' breakpoint */
+@media (max-width: 1024px) {
+    /* Corresponds roughly to 'lg' breakpoint */
     :root {
         --spacing-xl: 1.5rem; /* Keep original responsive adjustments if they make sense */
         /* --spacing-lg: 1.25rem; /* Already 1.5rem, this would be a reduction */
@@ -833,7 +946,8 @@ body {
     }
 }
 
-@media (max-width: 768px) { /* Corresponds roughly to 'md' breakpoint */
+@media (max-width: 768px) {
+    /* Corresponds roughly to 'md' breakpoint */
     .navbar {
         height: auto; /* Allow natural height based on content */
         padding: var(--spacing-sm) 0;
@@ -861,7 +975,8 @@ body {
         margin-left: auto; /* Push user section to the right before burger */
     }
 
-    .nav-menu { /* Mobile navigation panel */
+    .nav-menu {
+        /* Mobile navigation panel */
         position: fixed;
         /* Adjusted top to be dynamic with --header-height, but navbar height is auto now */
         top: calc(var(--header-height) + 1px); /* Position below the potentially wrapped navbar */
@@ -891,7 +1006,6 @@ body {
         top: var(--header-height); /* Revert to original if navbar height doesn't change much */
     }
 
-
     .nav-menu.active {
         transform: translateY(0);
         opacity: 1;
@@ -919,12 +1033,16 @@ body {
         justify-content: center;
     }
 
-    .nav-links a::before { /* Mobile nav links usually don't have the underline */
+    .nav-links a::before {
+        /* Mobile nav links usually don't have the underline */
         display: none;
     }
-    .nav-links a:hover::before { display:none; }
-    .nav-links a.active::before { display:none; }
-
+    .nav-links a:hover::before {
+        display: none;
+    }
+    .nav-links a.active::before {
+        display: none;
+    }
 
     .nav-links a:hover {
         background-color: var(--surface-hover-color);
@@ -933,7 +1051,6 @@ body {
     .nav-links a.active {
         background-color: var(--surface-hover-color); /* Similar visual cue */
     }
-
 
     .race-content {
         grid-template-columns: 1fr; /* Stack race content and betting panel */
@@ -951,7 +1068,8 @@ body {
     }
 }
 
-@media (max-width: 480px) { /* Corresponds roughly to 'sm' or extra-small */
+@media (max-width: 480px) {
+    /* Corresponds roughly to 'sm' or extra-small */
     :root {
         --font-size-xl: 1.75rem; /* Slightly smaller for very small screens */
         --font-size-lg: 1.35rem;
@@ -997,7 +1115,8 @@ body {
         align-self: flex-end;
     }
 
-    .chicken-avatar { /* In betting panel on mobile */
+    .chicken-avatar {
+        /* In betting panel on mobile */
         width: 2rem;
         height: 2rem;
     }
@@ -1006,8 +1125,12 @@ body {
 /* Animation Effects (mostly kept from original, ensure colors match theme)
    ========================================================================== */
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .fade-in {
@@ -1015,8 +1138,14 @@ body {
 }
 
 @keyframes slideInRight {
-    from { transform: translateX(20px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 .slide-in-right {
@@ -1047,4 +1176,18 @@ body {
 .dark-mode-toggle:focus {
     outline: none;
     box-shadow: 0 0 0 2px var(--ring); /* Focus ring */
+}
+
+.container.dashboard-wrapper {
+    max-width: 100vw;
+    padding: 0;
+}
+
+/* Add a new wrapper class that you can add to the parent element */
+.full-width-wrapper {
+    width: 95vw !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
 }
