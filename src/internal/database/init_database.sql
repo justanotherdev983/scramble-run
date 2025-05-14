@@ -63,6 +63,16 @@ CREATE TABLE IF NOT EXISTS bets (
                                     FOREIGN KEY (bet_status_id) REFERENCES bet_statuses (id)
 );
 
+CREATE TABLE IF NOT EXISTS contact_messages
+(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic      VARCHAR(255) NOT NULL,
+    email      VARCHAR(255) NOT NULL,
+    message    TEXT         NOT NULL,
+    created_at TIMESTAMP    NOT NULL,
+    ip_address VARCHAR(45)  NOT NULL
+);
+
 -- Insert sample data for bet_statuses
 -- Make sure these align with what your Go code expects (Pending, Won, Lost)
 INSERT INTO bet_statuses (status_name) VALUES ('Pending'), ('Won'), ('Lost'), ('Cancelled');

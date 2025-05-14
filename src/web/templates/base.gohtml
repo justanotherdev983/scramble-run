@@ -18,9 +18,10 @@
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
                 <li><a href="/races">Races</a></li>
-                <li><a href="/how-to-play">How to Play</a></li>
                 <li><a href="/contact">Contact</a></li>
+                <li><a href="/about-us">About us</a></li>
                 <li><a href="/login">Login</a></li>
+                <li class="balance-card">🪙 {{.UserBalance}}</li>
             </ul>
         </nav>
     </div>
@@ -30,24 +31,36 @@
     {{template "content" .}}
 </main>
 
-<footer class="footer">
-    <div class="footer-content">
-        <p>&copy; 2024 Chicken Racing. All rights reserved.</p>
-        <nav>
-            <ul class="footer-links">
-                <li><a href="/terms">Terms of Service</a></li>
-                <li><a href="/privacy">Privacy Policy</a></li>
-            </ul>
-        </nav>
+<footer class="border-t border-gray-800 bg-gray-950 py-10 text-center text-gray-400">
+    <div class="container mx-auto px-4">
+        <p>© 2025 Scramble Run. All rights reserved. Bet responsibly!</p>
+        <p class="mt-2 text-sm">This is a fictional game for entertainment purposes only.</p>
     </div>
 </footer>
 </body>
 </html>
 {{define "css"}}
-{{end}}
-{{define "user-info"}}
-<div id="user-info">
-    <span>Welcome, {{.UserData.Name}}</span>
-    <span>Balance: $<span class="user-balance">{{printf "%.2f" .UserBalance}}</span></span>
-</div>
+    <style>
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .balance-card {
+            justify-content: right;
+            margin-right: 0px;
+        }
+        .border-t { border-top-width: 1px; }
+        .border-gray-800 { border-color: #1f2937; }
+        .bg-gray-950 { background-color: #030712; }
+        .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+        .text-center { text-align: center; }
+        .text-gray-400 { color: #9ca3af; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+
+
+    </style>
 {{end}}
