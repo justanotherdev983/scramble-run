@@ -69,6 +69,10 @@ type PageData struct {
 	// ADD THESE FIELDS:
 	RaceFinished bool
 	WinnerID     int // Or string, if your Chicken IDs are strings. Must match type of Chicken.ID
+
+	IsLoggedIn      bool   // Useful for base template
+	CurrentUserName string // Useful for base template
+	CSRFToken       string // For CSRF protection
 }
 
 // WinningsCalc is used for calculating and displaying potential winnings.

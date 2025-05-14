@@ -200,7 +200,7 @@ func nextRaceInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// For now, I'll use a placeholder like in homeHandler, but this
 	// MUST be replaced with your actual session/authentication logic.
 	// Example: currentUserID := app.sessionManager.GetInt(r.Context(), "userID")
-	var currentUserID int = 1 // <<<< --- !!! PLACEHOLDER: Replace with actual User ID from session/request context !!! --- >>>
+	currentUserID := sessionManager.GetInt(r.Context(), sessionUserIDKey)
 	// If you have a session manager:
 	// currentUserID = sessionManager.GetInt(r.Context(), "userID") // Assuming sessionManager is accessible
 
