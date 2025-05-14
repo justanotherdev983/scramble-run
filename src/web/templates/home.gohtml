@@ -1,246 +1,931 @@
 {{define "css"}}
-    <link rel="stylesheet" href="/static/css/main.css" /> <!-- Your existing main CSS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scramble Run - Virtual Chicken Racing</title>
+    <link rel="stylesheet" href="/static/css/main.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Landing Page Specific Styles */
+        /* Base styles */
+        :root {
+            --background: #030712;
+            --foreground: #f8fafc;
+            --card: #030712;
+            --card-foreground: #f8fafc;
+            --primary: #2563eb;
+            --primary-foreground: #f8fafc;
+            --secondary: #1f2937;
+            --secondary-foreground: #f8fafc;
+            --muted: #1f2937;
+            --muted-foreground: #94a3b8;
+            --accent: #1f2937;
+            --accent-foreground: #f8fafc;
+            --destructive: #991b1b;
+            --destructive-foreground: #f8fafc;
+            --border: #1f2937;
+            --input: #1f2937;
+            --ring: #2563eb;
+            --radius: 0.5rem;
+            --transition-speed: 0.3s;
+            --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --spacing-xs: 0.5rem;
+            --spacing-xl: 1.5rem;
+            --font-size-sm: 0.875rem;
+            --color-text-primary: #f8fafc;
+            --color-primary: #2563eb;
+            --color-primary-hover: #1d4ed8;
+            --color-secondary: #0d9488;
+            --color-secondary-hover: #0f766e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Arial', sans-serif; /* Or your preferred font */
-            background-color: #252842; /* Light background */
-            color: #333;
-            line-height: 1.6;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.5;
         }
 
-        .landing-hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Engaging gradient */
-            color: white;
-            padding: 80px 20px;
-            text-align: center;
-            border-bottom-left-radius: 150px 20px; /* Subtle curve */
-            border-bottom-right-radius: 150px 20px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .landing-hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 20px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .landing-hero .chicken-icon {
-            font-size: 4rem; /* Make chicken icon prominent */
-            display: block;
-            margin-bottom: 15px;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-            40% {transform: translateY(-20px);}
-            60% {transform: translateY(-10px);}
-        }
-
-        .landing-hero p {
-            font-size: 1.4rem;
-            margin-bottom: 30px;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .landing-cta-button {
-            background-color: #ffd700; /* Gold accent */
-            color: #333;
-            padding: 15px 35px;
-            text-decoration: none;
-            border-radius: 50px; /* Pill shape */
-            font-size: 1.2rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            margin: 0 10px;
-        }
-
-        .landing-cta-button:hover {
-            background-color: #ffc400;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .landing-cta-button.secondary {
-            background-color: transparent;
-            border: 2px solid #ffd700;
-            color: #ffd700; /* Or white if on dark bg */
-        }
-        .landing-hero .landing-cta-button.secondary {
-            color: white;
-            border-color: white;
-        }
-        .landing-hero .landing-cta-button.secondary:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-
-
-        .landing-features {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            padding: 40px 20px;
-            max-width: 1200px;
+        .container {
+            width: 100%;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 0 2rem;
         }
 
-        .feature-card {
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            padding: 30px;
-            margin: 20px;
-            width: calc(33.333% - 40px); /* Adjust for responsiveness */
-            min-width: 280px;
-            text-align: center;
+        /* Utility classes */
+        .text-center { text-align: center; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .z-0 { z-index: 0; }
+        .z-10 { z-index: 10; }
+        .inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .flex-col { flex-direction: column; }
+        .gap-4 { gap: 1rem; }
+        .gap-8 { gap: 2rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .my-auto { margin-top: auto; margin-bottom: auto; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-5 { margin-bottom: 1.25rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-10 { margin-bottom: 2.5rem; }
+        .mb-16 { margin-bottom: 4rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-16 { margin-top: 4rem; }
+        .ml-2 { margin-left: 0.5rem; }
+        .p-2 { padding: 0.5rem; }
+        .p-6 { padding: 1.5rem; }
+        .p-8 { padding: 2rem; }
+        .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+        .py-20 { padding-top: 5rem; padding-bottom: 5rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .rounded-lg { border-radius: var(--radius); }
+        .rounded-xl { border-radius: calc(var(--radius) + 0.25rem); }
+        .rounded-full { border-radius: 9999px; }
+        .border-t { border-top-width: 1px; }
+        .border-gray-800 { border-color: #1f2937; }
+        .bg-gray-800 { background-color: #1f2937; }
+        .bg-gray-900 { background-color: #111827; }
+        .bg-gray-950 { background-color: #030712; }
+        .text-gray-100 { color: #f3f4f6; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .text-5xl { font-size: 3rem; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .font-extrabold { font-weight: 800; }
+        .tracking-tight { letter-spacing: -0.025em; }
+        .min-h-screen { min-height: 100vh; }
+        .w-full { width: 100%; }
+        .max-w-2xl { max-width: 42rem; }
+        .h-8 { height: 2rem; }
+        .w-8 { width: 2rem; }
+        .h-14 { height: 3.5rem; }
+        .w-14 { width: 3.5rem; }
+        .h-16 { height: 4rem; }
+        .w-16 { width: 4rem; }
+        .w-20 { width: 5rem; }
+        .h-1 { height: 0.25rem; }
+        .overflow-hidden { overflow: hidden; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        .hover\:-translate-y-1:hover { transform: translateY(-0.25rem); }
+        .left-1\/2 { left: 50%; }
+        .-translate-x-1\/2 { transform: translateX(-50%); }
+        .-top-4 { top: -1rem; }
+        .inline-block { display: inline-block; }
+        .grid { display: grid; }
+
+        /* Custom styles */
+        .bg-gradient-to-br {
+            background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+        }
+
+        .bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        }
+
+        .bg-gradient-to-t {
+            background-image: linear-gradient(to top, var(--tw-gradient-stops));
+        }
+
+        .bg-gradient-to-b {
+            background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+        }
+
+        .from-blue-900\/40 {
+            --tw-gradient-from: rgba(30, 58, 138, 0.4);
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(30, 58, 138, 0));
+        }
+
+        .via-gray-900 {
+            --tw-gradient-stops: var(--tw-gradient-from), #111827, var(--tw-gradient-to, rgba(17, 24, 39, 0));
+        }
+
+        .to-gray-950 {
+            --tw-gradient-to: #030712;
+        }
+
+        .from-blue-600 {
+            --tw-gradient-from: #2563eb;
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(37, 99, 235, 0));
+        }
+
+        .to-teal-600 {
+            --tw-gradient-to: #0d9488;
+        }
+
+        .from-blue-400 {
+            --tw-gradient-from: #60a5fa;
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
+        }
+
+        .via-teal-500 {
+            --tw-gradient-stops: var(--tw-gradient-from), #14b8a6, var(--tw-gradient-to, rgba(20, 184, 166, 0));
+        }
+
+        .to-amber-500 {
+            --tw-gradient-to: #f59e0b;
+        }
+
+        .from-gray-900 {
+            --tw-gradient-from: #111827;
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(17, 24, 39, 0));
+        }
+
+        .from-gray-950 {
+            --tw-gradient-from: #030712;
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(3, 7, 18, 0));
+        }
+
+        .bg-blue-900\/20 {
+            background-color: rgba(30, 58, 138, 0.2);
+        }
+
+        .text-blue-400 {
+            color: #60a5fa;
+        }
+
+        .bg-teal-900\/20 {
+            background-color: rgba(19, 78, 74, 0.2);
+        }
+
+        .text-teal-400 {
+            color: #2dd4bf;
+        }
+
+        .bg-amber-900\/20 {
+            background-color: rgba(120, 53, 15, 0.2);
+        }
+
+        .text-amber-400 {
+            color: #fbbf24;
+        }
+
+        .bg-clip-text {
+            -webkit-background-clip: text;
+            background-clip: text;
+        }
+
+        .text-transparent {
+            color: transparent;
+        }
+
+        .opacity-30 {
+            opacity: 0.3;
+        }
+
+        .mix-blend-soft-light {
+            mix-blend-mode: soft-light;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Enhanced Button styles with improved hover effects */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            font-weight: 600;
+            transition: all 0.3s var(--transition-bounce);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: rgba(255, 255, 255, 0.1);
+            transition: height 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn:hover::after {
+            height: 100%;
+        }
+
+        .btn-lg {
+            padding: 0.875rem 2rem;
+            font-size: 1.125rem;
+        }
+
+        .btn-primary {
+            background-image: linear-gradient(to right, #2563eb, #0d9488);
+            color: white;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-image: linear-gradient(to right, #1d4ed8, #0f766e);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background-color: rgba(17, 24, 39, 0.5);
+            border: 1px solid #2563eb;
+            color: #f3f4f6;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(31, 41, 55, 0.5);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+            border-color: #60a5fa;
+        }
+
+        .btn-outline:active {
+            transform: translateY(-1px);
+        }
+
+        /* Enhanced Icon styles */
+        .icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             transition: transform 0.3s ease;
         }
 
+        .group:hover .icon {
+            transform: scale(1.1);
+        }
+
+        .icon-sm {
+            height: 1rem;
+            width: 1rem;
+        }
+
+        .icon-md {
+            height: 1.5rem;
+            width: 1.5rem;
+        }
+
+        .icon-lg {
+            height: 2rem;
+            width: 2rem;
+        }
+
+        /* Enhanced Feature Cards */
+        .feature-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s var(--transition-bounce);
+            z-index: 1;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(13, 148, 136, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: -1;
+        }
+
         .feature-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 30px -10px rgba(2, 6, 23, 0.7);
         }
 
-        .feature-card .icon {
-            font-size: 3rem;
-            color: #667eea; /* Theme color */
-            margin-bottom: 20px;
+        .feature-card:hover::before {
+            opacity: 1;
         }
 
-        .feature-card h3 {
-            font-size: 1.8rem;
-            color: #333;
-            margin-bottom: 10px;
+        .feature-icon-container {
+            transition: all 0.3s ease;
         }
 
-        .feature-card p {
-            font-size: 1rem;
-            color: #555;
+        .feature-card:hover .feature-icon-container {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
         }
 
-        .landing-footer {
-            text-align: center;
-            padding: 30px 20px;
-            margin-top: 40px;
-            background-color: #333;
-            color: #252842;
-        }
-        .landing-footer p {
-            margin: 0;
+        /* Enhanced Step Cards */
+        .step-card {
+            transition: all 0.4s var(--transition-bounce);
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 992px) {
-            .feature-card {
-                width: calc(50% - 40px);
+        .step-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 30px -10px rgba(2, 6, 23, 0.7);
+        }
+
+        .step-number {
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover .step-number {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+        }
+
+        .step-icon {
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover .step-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        /* Grid layouts */
+        .grid-cols-1 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+        }
+
+        @media (min-width: 640px) {
+            .sm\:grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .sm\:flex-row {
+                flex-direction: row;
+            }
+
+            .sm\:w-auto {
+                width: auto;
             }
         }
-        @media (max-width: 768px) {
-            .landing-hero h1 {
-                font-size: 2.8rem;
+
+        @media (min-width: 768px) {
+            .md\:grid-cols-3 {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
-            .landing-hero p {
-                font-size: 1.2rem;
+
+            .md\:py-32 {
+                padding-top: 8rem;
+                padding-bottom: 8rem;
             }
-            .landing-cta-button {
-                padding: 12px 25px;
-                font-size: 1rem;
-                display: block;
-                margin: 10px auto;
-                width: fit-content;
+
+            .md\:text-7xl {
+                font-size: 4.5rem;
             }
-            .feature-card {
-                width: calc(100% - 40px);
+
+            .md\:text-2xl {
+                font-size: 1.5rem;
             }
         }
 
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-4 {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        /* Enhanced SVG icons */
+        .chevron-right {
+            height: 1rem;
+            width: 1rem;
+            margin-left: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .group:hover .group-hover\:translate-x-1 {
+            transform: translateX(0.5rem);
+        }
+
+        /* Enhanced title underline animation */
+        .title-underline {
+            position: relative;
+            display: inline-block;
+        }
+
+        .title-underline::after {
+            content: '';
+            position: absolute;
+            bottom: -0.75rem;
+            left: 50%;
+            width: 0;
+            height: 4px;
+            background: linear-gradient(to right, #2563eb, #0d9488);
+            transform: translateX(-50%);
+            transition: width 0.4s ease;
+            border-radius: 2px;
+        }
+
+        .title-underline:hover::after {
+            width: 80%;
+        }
+
+        /* Enhanced hero title with shimmer effect */
+        @keyframes shimmer {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .hero-title {
+            background: linear-gradient(
+                    90deg,
+                    #60a5fa 0%,
+                    #14b8a6 25%,
+                    #f59e0b 50%,
+                    #14b8a6 75%,
+                    #60a5fa 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shimmer 8s linear infinite;
+        }
+
+        /* Updated Navigation Menu Styles to match theme */
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xl);
+            height: 100%;
+            background: rgba(3, 7, 18, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+            padding: 0 2rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: var(--spacing-xl);
+            list-style: none;
+            height: 100%;
+        }
+
+        .nav-links li {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .nav-links a {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            padding: 0 var(--spacing-xs);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .nav-links a:hover {
+            color: var(--color-primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-links a::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(to right, #2563eb, #0d9488);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-links a:hover::before {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .nav-links a::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: linear-gradient(to bottom, rgba(37, 99, 235, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .nav-links a:hover::after {
+            opacity: 1;
+        }
+
+        .nav-links a.active {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+
+        .nav-links a.active::before {
+            transform: scaleX(1);
+            background: linear-gradient(to right, #2563eb, #0d9488);
+        }
+
+        /* Logo hover effect */
+        .logo {
+            transition: all 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.5));
+        }
+
+        /* Pulse animation for CTA elements */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
     </style>
+</head>
 {{end}}
 
 {{define "content"}}
-    <div class="landing-page-container">
-
-        <section class="landing-hero">
-            <span class="chicken-icon">🐔</span>
-            <h1>Welcome to Scramble Run!</h1>
-            <p>The most exciting virtual chicken racing game on the web. Place your bets, watch the feathers fly, and win big!</p>
-            <div>
-
-                {{if eq .UserData.Name "Guest"}} <!-- Or however you identify a non-logged-in user -->
-                <a href="/login" class="landing-cta-button">Login</a>
-                <a href="/signup" class="landing-cta-button secondary">Sign Up</a>
-                {{else}}
-                    <a href="/race" class="landing-cta-button">View Live Races</a>
-                    <a href="/singup" class="landing-cta-button secondary">Sing up</a>
-                    <a href="/login" class="landing-cta-button secondary">Log in</a>
-                {{end}}
+<body>
+<div class="min-h-screen bg-gray-950 text-gray-100">
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden py-20 md:py-32">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-900/40 via-gray-900 to-gray-950"></div>
+            <div class="absolute inset-0 opacity-30 mix-blend-soft-light">
+                <svg class="h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+                    <defs>
+                        <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
+                            <path d="M0 8V0H8" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"></path>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)"></rect>
+                </svg>
             </div>
-        </section>
+        </div>
 
-        <section class="landing-features">
-            <div class="feature-card">
-                <div class="icon">🏁</div>
-                <h3>Live Races</h3>
-                <p>Experience the thrill of real-time chicken races with dynamic odds and unpredictable outcomes. Every second counts!</p>
+        <div class="container relative z-10 mx-auto px-4 text-center">
+            <div class="animate-float mb-6 inline-block rounded-full bg-gradient-to-r from-blue-600 to-teal-600 p-2 logo">
+                <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-950 text-4xl">🐔</div>
             </div>
-            <div class="feature-card">
-                <div class="icon">💰</div>
-                <h3>Place Your Bets</h3>
-                <p>Analyze the odds, pick your champion chicken, and place your bets. Strategic betting can lead to big rewards!</p>
-            </div>
-            <div class="feature-card">
-                <div class="icon">🏆</div>
-                <h3>Compete & Win</h3>
-                <p>Track your betting history, climb the leaderboards (TODO), and show off your winnings. Glory awaits the shrewdest bettors!</p>
-            </div>
-        </section>
 
-        <section class="landing-how-it-works" style="text-align: center; padding: 40px 20px; background-color: white; margin: 40px 0;">
-            <h2>How It Works</h2>
-            <div style="max-width: 800px; margin: 20px auto; display: flex; justify-content: space-around; flex-wrap: wrap;">
-                <div style="margin:15px; flex-basis: 200px;">
-                    <div class="icon" style="font-size:2.5rem;">📝</div>
-                    <h4>1. Sign Up</h4>
-                    <p>Create your free account in seconds.</p>
+            <h1 class="mb-6 hero-title text-5xl font-extrabold tracking-tight md:text-7xl">
+                SCRAMBLE RUN
+            </h1>
+
+            <p class="mx-auto mb-10 max-w-2xl text-xl text-gray-300 md:text-2xl">
+                The most thrilling virtual chicken racing experience. Place your bets, watch the feathers fly, and win big!
+            </p>
+
+            <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <a href="/login" class="btn btn-lg btn-primary group w-full pulse sm:w-auto">
+                    Start Racing
+                    <svg xmlns="http://www.w3.org/2000/svg" class="chevron-right group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+                <a href="/signup" class="btn btn-lg btn-outline w-full sm:w-auto">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20">
+        <div class="container mx-auto px-4">
+            <div class="grid gap-8 md:grid-cols-3">
+                <div class="feature-card group rounded-xl bg-gradient-to-b from-gray-900 to-gray-950 p-8 shadow-lg">
+                    <div class="feature-icon-container mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-blue-900/20 text-blue-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="mb-3 text-2xl font-bold text-gray-100">Live Races</h3>
+                    <p class="text-gray-400">
+                        Experience the thrill of real-time chicken races with dynamic odds and unpredictable outcomes. Every
+                        second counts!
+                    </p>
                 </div>
-                <div style="margin:15px; flex-basis: 200px;">
-                    <div class="icon" style="font-size:2.5rem;">🪙</div>
-                    <h4>2. Get Credits</h4>
-                    <p>Start with some free credits to place bets.</p>
+
+                <div class="feature-card group rounded-xl bg-gradient-to-b from-gray-900 to-gray-950 p-8 shadow-lg">
+                    <div class="feature-icon-container mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-teal-900/20 text-teal-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                            <path d="M6 12h12"></path>
+                            <path d="M8 18v2"></path>
+                            <path d="M16 18v2"></path>
+                            <path d="M12 2v4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="mb-3 text-2xl font-bold text-gray-100">Place Your Bets</h3>
+                    <p class="text-gray-400">
+                        Analyze the odds, pick your champion chicken, and place your bets. Strategic betting can lead to big
+                        rewards!
+                    </p>
                 </div>
-                <div style="margin:15px; flex-basis: 200px;">
-                    <div class="icon" style="font-size:2.5rem;">🐔</div>
-                    <h4>3. Bet on a Chicken</h4>
-                    <p>Choose your favorite in the upcoming race.</p>
-                </div>
-                <div style="margin:15px; flex-basis: 200px;">
-                    <div class="icon" style="font-size:2.5rem;">🎉</div>
-                    <h4>4. Watch & Win!</h4>
-                    <p>Cheer your chicken to victory!</p>
+
+                <div class="feature-card group rounded-xl bg-gradient-to-b from-gray-900 to-gray-950 p-8 shadow-lg">
+                    <div class="feature-icon-container mb-5 flex h-14 w-14 items-center justify-center rounded-lg bg-amber-900/20 text-amber-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                            <path d="M4 22h16"></path>
+                            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="mb-3 text-2xl font-bold text-gray-100">Compete & Win</h3>
+                    <p class="text-gray-400">
+                        Track your betting history, climb the leaderboards, and show off your winnings. Glory awaits the
+                        shrewdest bettors!
+                    </p>
                 </div>
             </div>
-            {{if eq .UserData.Name "Guest"}}
-                <a href="/signup" class="landing-cta-button" style="margin-top: 20px;">Get Started Now!</a>
-            {{else}}
-                <a href="/races" class="landing-cta-button" style="margin-top: 20px;">Go to Races!</a>
-            {{end}}
-        </section>
+        </div>
+    </section>
 
-        <footer class="landing-footer">
+    <!-- How It Works Section -->
+    <section class="relative py-20">
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-900 to-gray-950"></div>
+        </div>
+
+        <div class="container relative z-10 mx-auto px-4 text-center">
+            <h2 class="mb-16 text-4xl font-bold text-gray-100">
+                <span class="title-underline">
+                    How It Works
+                </span>
+            </h2>
+
+            <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="step-card relative rounded-xl bg-gray-900 p-6 shadow-lg">
+                    <div class="step-number absolute -top-4 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-teal-600 text-sm font-bold">
+                        1
+                    </div>
+                    <div class="step-icon mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-gray-800 text-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <h4 class="mb-2 text-xl font-bold text-gray-100">Sign Up</h4>
+                    <p class="text-gray-400">Create your free account in seconds.</p>
+                </div>
+
+                <div class="step-card relative rounded-xl bg-gray-900 p-6 shadow-lg">
+                    <div class="step-number absolute -top-4 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-teal-600 text-sm font-bold">
+                        2
+                    </div>
+                    <div class="step-icon mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-gray-800 text-gray-300">
+                        <div class="text-2xl">🪙</div>
+                    </div>
+                    <h4 class="mb-2 text-xl font-bold text-gray-100">Get Credits</h4>
+                    <p class="text-gray-400">Start with free credits to place bets.</p>
+                </div>
+
+                <div class="step-card relative rounded-xl bg-gray-900 p-6 shadow-lg">
+                    <div class="step-number absolute -top-4 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-teal-600 text-sm font-bold">
+                        3
+                    </div>
+                    <div class="step-icon mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-gray-800 text-gray-300">
+                        <div class="text-2xl">🐔</div>
+                    </div>
+                    <h4 class="mb-2 text-xl font-bold text-gray-100">Bet on a Chicken</h4>
+                    <p class="text-gray-400">Choose your favorite in the upcoming race.</p>
+                </div>
+
+                <div class="step-card relative rounded-xl bg-gray-900 p-6 shadow-lg">
+                    <div class="step-number absolute -top-4 left-1/2 flex h-8 w-8 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-teal-600 text-sm font-bold">
+                        4
+                    </div>
+                    <div class="step-icon mb-4 mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-gray-800 text-gray-300">
+                        <div class="text-2xl">🎉</div>
+                    </div>
+                    <h4 class="mb-2 text-xl font-bold text-gray-100">Watch & Win!</h4>
+                    <p class="text-gray-400">Cheer your chicken to victory!</p>
+                </div>
+            </div>
+
+            <div class="mt-16">
+                <a href="/signup" class="btn btn-lg btn-primary pulse">
+                    Get Started Now!
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-800 bg-gray-950 py-10 text-center text-gray-400">
+        <div class="container mx-auto px-4">
             <p>© 2025 Scramble Run. All rights reserved. Bet responsibly!</p>
-            <p><small>This is a fictional game for entertainment purposes only.</small></p>
-        </footer>
+            <p class="mt-2 text-sm">This is a fictional game for entertainment purposes only.</p>
+        </div>
+    </footer>
+</div>
 
-    </div>
+<script>
+    // Add some interactive elements with JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add hover sound effect to buttons (optional)
+        const buttons = document.querySelectorAll('.btn');
 
-    <script>
-        // You can add any landing-page specific JS here if needed
-        // For example, simple animations on scroll, etc.
-        // For now, the CSS handles the chicken bounce.
-    </script>
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                // You can add a subtle sound effect here if desired
+                // For now, we'll just add a subtle transform
+                this.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            });
+
+            // Add ripple effect on click
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = button.getBoundingClientRect();
+
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.width = ripple.style.height = `${size}px`;
+                ripple.style.left = `${x}px`;
+                ripple.style.top = `${y}px`;
+                ripple.classList.add('ripple');
+
+                // Remove existing ripples
+                const currentRipples = button.getElementsByClassName('ripple');
+                Array.from(currentRipples).forEach(currentRipple => {
+                    currentRipple.remove();
+                });
+
+                button.appendChild(ripple);
+
+                // Remove ripple after animation
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add parallax effect to hero section
+        const heroSection = document.querySelector('section');
+        const heroContent = heroSection.querySelector('.container');
+
+        window.addEventListener('scroll', function() {
+            const scrollPosition = window.scrollY;
+            if (scrollPosition < heroSection.offsetHeight) {
+                heroContent.style.transform = `translateY(${scrollPosition * 0.2}px)`;
+            }
+        });
+
+        // Add tilt effect to feature cards
+        const featureCards = document.querySelectorAll('.feature-card');
+
+        featureCards.forEach(card => {
+            card.addEventListener('mousemove', function(e) {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                const xPercent = x / rect.width - 0.5;
+                const yPercent = y / rect.height - 0.5;
+
+                card.style.transform = `translateY(-8px) rotateX(${yPercent * -5}deg) rotateY(${xPercent * 5}deg)`;
+                card.style.boxShadow = `
+                        ${xPercent * 10}px ${yPercent * 10}px 20px rgba(2, 6, 23, 0.5),
+                        0 20px 30px -10px rgba(2, 6, 23, 0.7)
+                    `;
+            });
+
+            card.addEventListener('mouseleave', function() {
+                card.style.transform = 'translateY(-8px)';
+                card.style.boxShadow = '0 20px 30px -10px rgba(2, 6, 23, 0.7)';
+            });
+        });
+    });
+</script>
+
+<style>
+    /* Ripple effect for buttons */
+    .btn {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
+    }
+
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    /* Smooth scrolling for the whole page */
+    html {
+        scroll-behavior: smooth;
+    }
+</style>
+</body>
+</html>
 {{end}}
