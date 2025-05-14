@@ -1,19 +1,686 @@
+:root {
+    --background: #030712;
+    --foreground: #f8fafc;
+    --card: #030712; /* Note: Same as background. login.css uses --surface-color for differentiation. */
+    --card-foreground: #f8fafc;
+
+    --primary: #2563eb;
+    --primary-rgb: 37, 99, 235; /* For box-shadows, e.g., in login.css */
+    --primary-foreground: #f8fafc;
+    --primary-hover: #1d4ed8; /* Combined from main styles and login.css --color-primary-hover */
+
+    --secondary: #1f2937; /* Main theme's secondary (dark gray) */
+    --secondary-foreground: #f8fafc;
+
+    /* login.css specific colors, distinct from main theme's --secondary */
+    --color-secondary: #0d9488; /* Teal for gradients/accents in login.css */
+    --color-secondary-hover: #0f766e; /* Teal hover for login.css */
+    --rgb-secondary: 13, 148, 136; /* RGB for teal, used in login.css alerts */
+
+    --muted: #1f2937;
+    --muted-foreground: #94a3b8;
+
+    --accent: #1f2937;
+    --accent-foreground: #f8fafc;
+
+    --destructive: #991b1b;
+    --destructive-rgb: 153, 27, 27; /* For alert backgrounds in login.css */
+    --destructive-foreground: #f8fafc;
+
+    --border: #1f2937;
+    --input: #1f2937;
+    --ring: #2563eb;
+
+    --radius: 0.5rem;
+    --border-radius-sm: var(--radius); /* For login.css consistency, e.g., form inputs, alerts */
+    --border-radius-md: 0.75rem; /* For login.css consistency, e.g., login form card */
+
+    --transition-speed: 0.3s;
+    --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Spacing variables from both stylesheets, harmonized */
+    --spacing-xs: 0.5rem;   /* login.css & main utilities (mb-2, p-2) */
+    --spacing-sm: 0.75rem;  /* login.css media query (approx mb-3, not a direct main utility spacing but logical) */
+    --spacing-md: 1rem;     /* login.css (form padding, gaps), main utilities (gap-4) */
+    --spacing-lg: 1.25rem;  /* login.css (form group margins, approx mb-5) */
+    --spacing-xl: 1.5rem;   /* login.css & main utilities (mb-6, p-6) */
+
+    /* Font Sizes from both stylesheets */
+    --font-size-xs: 0.75rem; /* login.css (remember me, forgot password) */
+    --font-size-sm: 0.875rem;/* login.css & main (text-sm) */
+    --font-size-md: 1rem;    /* login.css (inputs, buttons), typically base font size */
+    --font-size-xl: 2rem;    /* login.css (login title) */
+    /* main.css also has utility classes like .text-lg, .text-2xl, etc. */
+
+    /* Text Colors from both stylesheets */
+    --color-text-primary: var(--foreground); /* #f8fafc; For login.css labels, inputs */
+    --color-text-secondary: var(--muted-foreground); /* #94a3b8; For login.css subtitles, secondary labels */
+
+    /* Alert specific text colors from login.css */
+    --color-alert-success-text: #10b981;
+    --color-alert-error-text: #ef4444;
+
+    /* Other variables needed by login.css */
+    --surface-color: var(--secondary); /* #1f2937; For login form background, providing contrast to main --background */
+    --header-height: 60px; /* Placeholder: Assumed globally available by login.css */
+
+    /* The following were in main.css's :root and are kept if not superseded */
+    /* --color-primary: #2563eb; (already covered by --primary) */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.5;
+}
+
+.container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.relative { position: relative; }
+.absolute { position: absolute; }
+.z-0 { z-index: 0; }
+.z-10 { z-index: 10; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.flex-col { flex-direction: column; }
+.gap-4 { gap: 1rem; }
+.gap-8 { gap: 2rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.my-auto { margin-top: auto; margin-bottom: auto; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-5 { margin-bottom: 1.25rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-10 { margin-bottom: 2.5rem; }
+.mb-16 { margin-bottom: 4rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-16 { margin-top: 4rem; }
+.ml-2 { margin-left: 0.5rem; }
+.p-2 { padding: 0.5rem; }
+.p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.py-20 { padding-top: 5rem; padding-bottom: 5rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.rounded-lg { border-radius: var(--radius); }
+.rounded-xl { border-radius: calc(var(--radius) + 0.25rem); }
+.rounded-full { border-radius: 9999px; }
+.border-t { border-top-width: 1px; }
+.border-gray-800 { border-color: #1f2937; } /* Corresponds to var(--border) */
+.bg-gray-800 { background-color: #1f2937; } /* Corresponds to var(--secondary) / var(--surface-color) */
+.bg-gray-900 { background-color: #111827; }
+.bg-gray-950 { background-color: #030712; } /* Corresponds to var(--background) */
+.text-gray-100 { color: #f3f4f6; } /* Close to var(--foreground) */
+.text-gray-300 { color: #d1d5db; }
+.text-gray-400 { color: #9ca3af; } /* Corresponds to var(--muted-foreground) / var(--color-text-secondary) */
+.text-sm { font-size: 0.875rem; } /* Corresponds to var(--font-size-sm) */
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; }
+.text-4xl { font-size: 2.25rem; }
+.text-5xl { font-size: 3rem; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-extrabold { font-weight: 800; }
+.tracking-tight { letter-spacing: -0.025em; }
+.min-h-screen { min-height: 100vh; }
+.w-full { width: 100%; }
+.max-w-2xl { max-width: 42rem; }
+.h-8 { height: 2rem; }
+.w-8 { width: 2rem; }
+.h-14 { height: 3.5rem; }
+.w-14 { width: 3.5rem; }
+.h-16 { height: 4rem; }
+.w-16 { width: 4rem; }
+.w-20 { width: 5rem; }
+.h-1 { height: 0.25rem; }
+.overflow-hidden { overflow: hidden; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.hover\:-translate-y-1:hover { transform: translateY(-0.25rem); }
+.left-1\/2 { left: 50%; }
+.-translate-x-1\/2 { transform: translateX(-50%); }
+.-top-4 { top: -1rem; }
+.inline-block { display: inline-block; }
+.grid { display: grid; }
+
+/* Custom styles (from main provided styles) */
+.bg-gradient-to-br {
+    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-r {
+    background-image: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-t {
+    background-image: linear-gradient(to top, var(--tw-gradient-stops));
+}
+
+.bg-gradient-to-b {
+    background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
+
+.from-blue-900\/40 {
+    --tw-gradient-from: rgba(30, 58, 138, 0.4);
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(30, 58, 138, 0));
+}
+
+.via-gray-900 {
+    --tw-gradient-stops: var(--tw-gradient-from), #111827, var(--tw-gradient-to, rgba(17, 24, 39, 0));
+}
+
+.to-gray-950 {
+    --tw-gradient-to: #030712;
+}
+
+.from-blue-600 { /* Corresponds to var(--primary) */
+    --tw-gradient-from: #2563eb;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(37, 99, 235, 0));
+}
+
+.to-teal-600 { /* Corresponds to var(--color-secondary) */
+    --tw-gradient-to: #0d9488;
+}
+
+.from-blue-400 {
+    --tw-gradient-from: #60a5fa;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
+}
+
+.via-teal-500 {
+    --tw-gradient-stops: var(--tw-gradient-from), #14b8a6, var(--tw-gradient-to, rgba(20, 184, 166, 0));
+}
+
+.to-amber-500 {
+    --tw-gradient-to: #f59e0b;
+}
+
+.from-gray-900 {
+    --tw-gradient-from: #111827;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(17, 24, 39, 0));
+}
+
+.from-gray-950 {
+    --tw-gradient-from: #030712;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(3, 7, 18, 0));
+}
+
+.bg-blue-900\/20 {
+    background-color: rgba(30, 58, 138, 0.2);
+}
+
+.text-blue-400 {
+    color: #60a5fa;
+}
+
+.bg-teal-900\/20 {
+    background-color: rgba(19, 78, 74, 0.2);
+}
+
+.text-teal-400 {
+    color: #2dd4bf;
+}
+
+.bg-amber-900\/20 {
+    background-color: rgba(120, 53, 15, 0.2);
+}
+
+.text-amber-400 {
+    color: #fbbf24;
+}
+
+.bg-clip-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.text-transparent {
+    color: transparent;
+}
+
+.opacity-30 {
+    opacity: 0.3;
+}
+
+.mix-blend-soft-light {
+    mix-blend-mode: soft-light;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Enhanced Button styles with improved hover effects */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    font-weight: 600;
+    transition: all 0.3s var(--transition-bounce);
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    transition: height 0.3s ease;
+    z-index: -1;
+}
+
+.btn:hover::after {
+    height: 100%;
+}
+
+.btn-lg {
+    padding: 0.875rem 2rem;
+    font-size: 1.125rem;
+}
+
+.btn-primary {
+    background-image: linear-gradient(to right, #2563eb, #0d9488); /* Uses hardcoded colors, could use var(--primary), var(--color-secondary) */
+    color: white; /* Consistent with var(--primary-foreground) */
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3); /* Uses hardcoded RGB, could use var(--primary-rgb) */
+}
+
+.btn-primary:hover {
+    background-image: linear-gradient(to right, #1d4ed8, #0f766e); /* Uses hardcoded colors, could use var(--primary-hover), var(--color-secondary-hover) */
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); /* Uses hardcoded RGB */
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+.btn-outline {
+    background-color: rgba(17, 24, 39, 0.5);
+    border: 1px solid #2563eb; /* Uses hardcoded color, could use var(--primary) */
+    color: #f3f4f6; /* Consistent with var(--foreground) */
+    backdrop-filter: blur(4px);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15); /* Uses hardcoded RGB */
+}
+
+.btn-outline:hover {
+    background-color: rgba(31, 41, 55, 0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25); /* Uses hardcoded RGB */
+    border-color: #60a5fa; /* text-blue-400 */
+}
+
+.btn-outline:active {
+    transform: translateY(-1px);
+}
+
+/* Enhanced Icon styles */
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.group:hover .icon {
+    transform: scale(1.1);
+}
+
+.icon-sm {
+    height: 1rem;
+    width: 1rem;
+}
+
+.icon-md {
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.icon-lg {
+    height: 2rem;
+    width: 2rem;
+}
+
+/* Enhanced Feature Cards */
+.feature-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s var(--transition-bounce);
+    z-index: 1;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(13, 148, 136, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 30px -10px rgba(2, 6, 23, 0.7);
+}
+
+.feature-card:hover::before {
+    opacity: 1;
+}
+
+.feature-icon-container {
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon-container {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.4);
+}
+
+/* Enhanced Step Cards */
+.step-card {
+    transition: all 0.4s var(--transition-bounce);
+}
+
+.step-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 30px -10px rgba(2, 6, 23, 0.7);
+}
+
+.step-number {
+    transition: all 0.3s ease;
+}
+
+.step-card:hover .step-number {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+}
+
+.step-icon {
+    transition: all 0.3s ease;
+}
+
+.step-card:hover .step-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* Grid layouts */
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+    .sm\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sm\:flex-row {
+        flex-direction: row;
+    }
+
+    .sm\:w-auto {
+        width: auto;
+    }
+}
+
+@media (min-width: 768px) {
+    .md\:grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .md\:py-32 {
+        padding-top: 8rem;
+        padding-bottom: 8rem;
+    }
+
+    .md\:text-7xl {
+        font-size: 4.5rem;
+    }
+
+    .md\:text-2xl {
+        font-size: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .lg\:grid-cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* Enhanced SVG icons */
+.chevron-right {
+    height: 1rem;
+    width: 1rem;
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.group:hover .group-hover\:translate-x-1 {
+    transform: translateX(0.5rem);
+}
+
+/* Enhanced title underline animation */
+.title-underline {
+    position: relative;
+    display: inline-block;
+}
+
+.title-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -0.75rem;
+    left: 50%;
+    width: 0;
+    height: 4px;
+    background: linear-gradient(to right, #2563eb, #0d9488);
+    transform: translateX(-50%);
+    transition: width 0.4s ease;
+    border-radius: 2px;
+}
+
+.title-underline:hover::after {
+    width: 80%;
+}
+
+/* Enhanced hero title with shimmer effect */
+@keyframes shimmer {
+    0% {
+        background-position: -100% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.hero-title {
+    background: linear-gradient(
+            90deg,
+            #60a5fa 0%,
+            #14b8a6 25%,
+            #f59e0b 50%,
+            #14b8a6 75%,
+            #60a5fa 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 8s linear infinite;
+}
+
+/* Updated Navigation Menu Styles to match theme */
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl); /* Uses updated spacing var */
+    height: 100%;
+    background: rgba(3, 7, 18, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(37, 99, 235, 0.2);
+    padding: 0 2rem;
+}
+
+.nav-links {
+    display: flex;
+    gap: var(--spacing-xl); /* Uses updated spacing var */
+    list-style: none;
+    height: 100%;
+}
+
+.nav-links li {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+}
+
+.nav-links a {
+    color: var(--color-text-primary); /* Uses updated text color var */
+    text-decoration: none;
+    font-size: var(--font-size-sm); /* Uses updated font size var */
+    font-weight: 500;
+    padding: 0 var(--spacing-xs); /* Uses updated spacing var */
+    height: 100%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.nav-links a:hover {
+    color: var(--primary); /* Uses updated primary color var */
+    transform: translateY(-2px);
+}
+
+.nav-links a::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 3px;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(to right, var(--primary), var(--color-secondary)); /* Uses updated color vars */
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s ease;
+}
+
+.nav-links a:hover::before {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+.nav-links a::after {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to bottom, rgba(var(--primary-rgb), 0.1), transparent); /* Uses primary-rgb var */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.nav-links a:hover::after {
+    opacity: 1;
+}
+
+.nav-links a.active {
+    color: var(--primary); /* Uses updated primary color var */
+    font-weight: 600;
+}
+
+.nav-links a.active::before {
+    transform: scaleX(1);
+    background: linear-gradient(to right, var(--primary), var(--color-secondary)); /* Uses updated color vars */
+}
+
+/* Logo hover effect */
+.logo {
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 8px rgba(var(--primary-rgb), 0.5)); /* Uses primary-rgb var */
+}
+
+/* Pulse animation for CTA elements */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7); /* Uses primary-rgb var */
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0); /* Uses primary-rgb var */
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); /* Uses primary-rgb var */
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* login.css - Refactored with New Style Guide */
+
 /* Login Form Styles */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - var(--header-height));
+    min-height: calc(100vh - var(--header-height)); /* Assumes --header-height is globally available */
     padding: var(--spacing-xl) var(--spacing-md);
+    background-color: var(--background); /* Ensure main background is applied */
 }
 
 .login-form {
-    background-color: var(--color-surface);
-    border-radius: var(--border-radius-md);
+    background-color: var(--secondary); /* New surface color, mapped to var(--secondary) */
+    border-radius: var(--border-radius-md); /* e.g., 0.75rem */
     padding: var(--spacing-xl);
     width: 100%;
     max-width: 450px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    /* New shadow style, similar to .shadow-lg utility class */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -26,33 +693,35 @@
     font-size: var(--font-size-xl);
     font-weight: 700;
     margin-bottom: var(--spacing-xs);
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    /* New gradient using primary blue and secondary teal */
+    background: linear-gradient(to right, var(--primary), var(--color-secondary));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
 }
 
 .login-subtitle {
-    color: var(--color-text-secondary);
+    color: var(--color-text-secondary); /* New secondary text color, mapped to var(--muted-foreground) */
     font-size: var(--font-size-sm);
 }
 
-.form-group {
+.form-group { /* This class was in old main.css, keeping for consistency if used elsewhere */
     margin-bottom: var(--spacing-lg);
 }
 
-.label {
+.label { /* Renamed from .form-label in old main.css to avoid conflict if both are loaded */
     display: block;
     margin-bottom: var(--spacing-xs);
     font-weight: 500;
+    color: var(--color-text-primary);
 }
 
 .form-input {
     width: 100%;
     padding: var(--spacing-md);
-    background-color: var(--color-surface-variant);
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-sm);
+    background-color: var(--input); /* New input background color */
+    border: 1px solid var(--border); /* New border color */
+    border-radius: var(--border-radius-sm); /* e.g., 0.5rem */
     color: var(--color-text-primary);
     font-size: var(--font-size-md);
     transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
@@ -60,8 +729,8 @@
 
 .form-input:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+    border-color: var(--ring); /* New ring color for focus */
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2); /* New focus shadow, uses var(--primary-rgb) */
 }
 
 .form-options {
@@ -79,7 +748,9 @@
 
 .remember-me-input {
     margin-right: var(--spacing-xs);
-    accent-color: var(--color-primary);
+    accent-color: var(--primary); /* Use new primary color for checkbox accent */
+    width: 1em;
+    height: 1em;
 }
 
 .remember-me-label {
@@ -89,13 +760,13 @@
 
 .forgot-password a {
     font-size: var(--font-size-xs);
-    color: var(--color-primary);
+    color: var(--primary); /* New primary color for link */
     text-decoration: none;
     transition: color var(--transition-speed);
 }
 
 .forgot-password a:hover {
-    color: var(--color-primary-hover);
+    color: var(--primary-hover); /* New primary hover color */
     text-decoration: underline;
 }
 
@@ -106,26 +777,27 @@
 .submit-button {
     width: 100%;
     padding: var(--spacing-md);
-    background-color: var(--color-primary);
-    color: var(--color-background);
+    /* New primary button style */
+    background-image: linear-gradient(to right, var(--primary), var(--color-secondary));
+    color: var(--primary-foreground); /* Text color for primary button */
     border: none;
     border-radius: var(--border-radius-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-speed);
+    transition: all var(--transition-speed) var(--transition-bounce);
     font-size: var(--font-size-md);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.3); /* Uses var(--primary-rgb) */
 }
 
 .submit-button:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    background-image: linear-gradient(to right, var(--primary-hover), var(--color-secondary-hover));
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4); /* Uses var(--primary-rgb) */
 }
 
 .submit-button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.2); /* Uses var(--primary-rgb) */
 }
 
 .signup-link {
@@ -135,14 +807,14 @@
 }
 
 .signup-link a {
-    color: var(--color-primary);
+    color: var(--primary); /* New primary color for link */
     text-decoration: none;
     font-weight: 500;
     transition: color var(--transition-speed);
 }
 
 .signup-link a:hover {
-    color: var(--color-primary-hover);
+    color: var(--primary-hover); /* New primary hover color */
     text-decoration: underline;
 }
 
@@ -155,29 +827,49 @@
 }
 
 .alert-success {
-    background-color: rgba(16, 185, 129, 0.1);
-    border-left: 4px solid #10b981;
-    color: #10b981;
+    /* Using theme-consistent teal for success accents, original text color for clarity */
+    background-color: rgba(var(--rgb-secondary), 0.1); /* Uses var(--rgb-secondary) for teal */
+    border-left: 4px solid var(--color-secondary); /* Teal border */
+    color: var(--color-alert-success-text); /* Original clear green text */
 }
 
 .alert-error {
-    background-color: rgba(239, 68, 68, 0.1);
-    border-left: 4px solid #ef4444;
-    color: #ef4444;
+    /* Using theme's destructive color for border/bg, original text color for clarity */
+    background-color: rgba(var(--destructive-rgb), 0.1); /* Uses var(--destructive-rgb) */
+    border-left: 4px solid var(--destructive); /* Destructive color border */
+    color: var(--color-alert-error-text); /* Original clear red text */
 }
+
+
+/* Animation for login form (from original login.css) */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 
 @media (max-width: 480px) {
     .login-form {
         padding: var(--spacing-lg);
+        margin: 0 var(--spacing-sm); /* Add some horizontal margin for very small screens */
+        max-width: calc(100% - (2 * var(--spacing-sm)));
     }
-    
+
+    .login-title {
+        font-size: calc(var(--font-size-xl) * 0.85); /* Slightly smaller title on mobile */
+    }
+
     .form-options {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-md); /* Increased gap for better touch targets */
     }
-    
-    .forgot-password {
-        margin-top: var(--spacing-xs);
-    }
+
+    /* .forgot-password does not need specific margin-top here as gap handles it */
 }

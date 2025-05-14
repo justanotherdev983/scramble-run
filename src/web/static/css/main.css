@@ -7,40 +7,68 @@
 }
 
 :root {
-    --color-background: #1a1c2e;
-    --color-surface: #252842;
-    --color-surface-variant: #1e2235;
-    --color-surface-hover: #2a2d4a;
-    --color-primary: #fbbf24;
-    --color-primary-hover: #f59e0b;
-    --color-secondary: #f97316;
-    --color-text-primary: #ffffff;
-    --color-text-secondary: #9ca3af;
-    --color-border: rgba(255, 255, 255, 0.1);
-    --border-radius-sm: 8px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 9999px;
+    /* Core from new style guide */
+    --background: #030712;
+    --foreground: #f8fafc;
+    --card: #111827; /* bg-gray-900 for cards/surfaces */
+    --card-foreground: #f8fafc;
+    --primary: #2563eb; /* New Blue Primary */
+    --primary-foreground: #f8fafc;
+    --primary-hover: #1d4ed8;
+    --secondary: #0d9488; /* New Teal Secondary */
+    --secondary-hover: #0f766e;
+    --muted: #1f2937; /* bg-gray-800 for muted surfaces/variants */
+    --muted-foreground: #94a3b8; /* text-gray-400 */
+    --border: #1f2937; /* border-gray-800 */
+    --input: #1f2937;
+    --ring: var(--primary); /* #2563eb */
+    --radius: 0.5rem;
+    --transition-speed: 0.3s;
+    --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* Text colors */
+    --color-text-primary: var(--foreground);
+    --color-text-secondary: var(--muted-foreground);
+
+    /* Specific accent colors from OLD style guide (amber/orange) preserved for thematic elements */
+    --color-accent-amber: #fbbf24;
+    --color-accent-amber-hover: #f59e0b;
+    --color-accent-orange: #f97316;
+
+    /* Surface colors based on new theme */
+    --surface-color: var(--card); /* Main surface color, e.g., navbar, panels */
+    --surface-variant-color: var(--muted); /* Slightly different surface, e.g., input backgrounds */
+    --surface-hover-color: #2c3a4f; /* A bit lighter than --muted for hover */
+
+    /* Radii (mapping old names to new system) */
+    --border-radius-sm: var(--radius); /* 0.5rem */
+    --border-radius-md: calc(var(--radius) + 0.25rem); /* 0.75rem */
+    --border-radius-lg: 9999px; /* rounded-full */
+
+    /* Spacing (mapping old names to new system) */
     --spacing-xs: 0.5rem;
     --spacing-sm: 0.75rem;
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
     --spacing-2xl: 3rem;
-    --font-size-xs: 0.875rem;
-    --font-size-sm: 0.95rem;
-    --font-size-md: 1rem;
-    --font-size-lg: 1.5rem;
-    --font-size-xl: 2rem;
-    --transition-speed: 0.2s;
+
+    /* Font Sizes (mapping old names to new system) */
+    --font-size-xs: 0.875rem; /* text-sm */
+    --font-size-sm: 0.95rem; /* Custom, between text-sm and base */
+    --font-size-md: 1rem;    /* Base */
+    --font-size-lg: 1.5rem;  /* text-2xl equivalent */
+    --font-size-xl: 2rem;    /* large heading */
+
     --header-height: 70px;
 }
 
 body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
     "Helvetica Neue", sans-serif;
-    background-color: var(--color-background);
+    background-color: var(--background);
     color: var(--color-text-primary);
-    line-height: 1.6;
+    line-height: 1.5; /* Adjusted from 1.6 to match new guide */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -49,29 +77,31 @@ body {
 /* Layout Components
    ========================================================================== */
 .container {
-    max-width: 1200px;
+    max-width: 1400px; /* From new style guide */
     margin: 0 auto;
-    padding: 0 var(--spacing-md);
+    padding: 0 var(--spacing-lg); /* Adjusted for consistency, 1.5rem */
     width: 100%;
 }
 
 .main {
     flex: 1;
-    padding: var(--spacing-xl) 0;
+    padding: var(--spacing-xl) 0; /* 2rem 0 */
 }
 
 /* Navigation
    ========================================================================== */
 .navbar {
-    background-color: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+    background: rgba(3, 7, 18, 0.8); /* Semi-transparent background from new style */
+    backdrop-filter: blur(10px);     /* Blur effect */
+    border-bottom: 1px solid var(--border); /* New border color */
     position: sticky;
     top: 0;
     z-index: 100;
     height: var(--header-height);
     display: flex;
     align-items: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Shadow similar to new style guide's .shadow-lg */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .navbar-container {
@@ -85,15 +115,21 @@ body {
     font-size: var(--font-size-lg);
     font-weight: 700;
     text-decoration: none;
-    color: white;
+    color: var(--color-text-primary); /* Ensure high contrast */
     white-space: nowrap;
     padding: var(--spacing-xs) 0;
     display: flex;
     align-items: center;
+    transition: transform var(--transition-speed) ease, filter var(--transition-speed) ease;
+}
+
+.logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 8px rgba(37, 99, 235, 0.5)); /* Primary color glow */
 }
 
 .logo img {
-    height: 2em;
+    height: 2em; /* Remains relative to font-size */
     margin-right: var(--spacing-xs);
 }
 
@@ -127,31 +163,37 @@ body {
     display: flex;
     align-items: center;
     position: relative;
-    transition: color var(--transition-speed);
+    transition: all var(--transition-speed) ease;
+    overflow: hidden;
 }
 
 .nav-links a:hover {
-    color: var(--color-primary);
+    color: var(--primary); /* New primary color for hover */
+    transform: translateY(-2px);
 }
 
-.nav-links a::after {
+.nav-links a::before { /* Underline effect from new style */
     content: "";
     position: absolute;
-    width: 0;
+    width: 100%;
     height: 3px;
     bottom: 0;
     left: 0;
-    background-color: var(--color-primary);
-    transition: width var(--transition-speed);
+    background: linear-gradient(to right, var(--primary), var(--secondary)); /* Blue to Teal gradient */
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--transition-speed) ease;
 }
 
-.nav-links a:hover::after,
-.nav-links a.active::after {
-    width: 100%;
+.nav-links a:hover::before,
+.nav-links a.active::before {
+    transform: scaleX(1);
+    transform-origin: left;
 }
 
 .nav-links a.active {
-    color: var(--color-primary);
+    color: var(--primary); /* New primary color for active */
+    font-weight: 600;
 }
 
 /* User Navigation
@@ -163,12 +205,14 @@ body {
 }
 
 .credits-display {
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    /* Using the new primary and secondary for the gradient */
+    background: linear-gradient(to right, var(--primary), var(--secondary));
     padding: var(--spacing-xs) var(--spacing-md);
     border-radius: var(--border-radius-lg);
     font-size: var(--font-size-xs);
     font-weight: 600;
     white-space: nowrap;
+    color: var(--primary-foreground); /* Ensure text is readable on gradient */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
@@ -192,24 +236,25 @@ body {
 }
 
 .user-info:hover {
-    background-color: var(--color-surface-hover);
+    background-color: var(--surface-hover-color);
 }
 
 .user-avatar {
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 50%;
-    background-color: #3b82f6;
+    background-color: var(--muted); /* Muted background */
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    border: 2px solid var(--color-primary);
+    border: 2px solid var(--primary); /* New primary color for border */
 }
 
 .user-name {
     font-weight: 500;
+    color: var(--color-text-primary);
 }
 
 .dropdown-menu {
@@ -217,15 +262,15 @@ body {
     top: 100%;
     right: 0;
     margin-top: var(--spacing-xs);
-    background-color: var(--color-surface);
+    background-color: var(--surface-color);
     border-radius: var(--border-radius-sm);
     min-width: 220px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* Adjusted shadow for new theme */
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: all var(--transition-speed);
-    border: 1px solid var(--color-border);
+    transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease, transform var(--transition-speed) ease;
+    border: 1px solid var(--border);
     overflow: hidden;
 }
 
@@ -246,12 +291,13 @@ body {
 }
 
 .dropdown-menu a:hover {
-    background-color: var(--color-surface-hover);
+    background-color: var(--surface-hover-color);
 }
 
 .dropdown-menu svg {
     width: 1rem;
     height: 1rem;
+    color: var(--color-text-secondary); /* Muted color for icons */
 }
 
 /* Mobile Menu
@@ -268,13 +314,15 @@ body {
 
 .mobile-menu-button:focus {
     outline: none;
+    /* Optional: add ring matching new style guide */
+    box-shadow: 0 0 0 2px var(--ring);
 }
 
 .mobile-menu-icon {
     display: block;
     width: 24px;
     height: 2px;
-    background-color: var(--color-text-primary);
+    background-color: var(--foreground); /* Use foreground for visibility */
     position: relative;
     transition: background-color var(--transition-speed);
 }
@@ -285,7 +333,7 @@ body {
     position: absolute;
     width: 24px;
     height: 2px;
-    background-color: var(--color-text-primary);
+    background-color: var(--foreground);
     transition: transform var(--transition-speed);
 }
 
@@ -314,8 +362,8 @@ body {
 /* Footer
    ========================================================================== */
 .footer {
-    background-color: var(--color-surface);
-    border-top: 1px solid var(--color-border);
+    background-color: var(--surface-color);
+    border-top: 1px solid var(--border);
     padding: var(--spacing-xl) 0;
     margin-top: auto;
 }
@@ -350,15 +398,17 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--spacing-xl);
-    background-color: var(--color-surface);
+    background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
     padding: var(--spacing-lg);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 .race-title {
     font-size: var(--font-size-xl);
     font-weight: 700;
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    /* Preserving original amber/orange gradient for this specific title */
+    background: linear-gradient(to right, var(--color-accent-amber), var(--color-accent-orange));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -369,10 +419,11 @@ body {
     align-items: center;
     gap: var(--spacing-xs);
     padding: var(--spacing-xs) var(--spacing-md);
-    background-color: var(--color-surface-variant);
+    background-color: var(--surface-variant-color); /* Muted background */
     border-radius: var(--border-radius-lg);
     font-size: var(--font-size-xs);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    color: var(--color-text-primary);
 }
 
 .race-timer::before {
@@ -390,7 +441,7 @@ body {
 /* Race Track
    ========================================================================== */
 .race-track {
-    background-color: var(--color-surface);
+    background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
     padding: var(--spacing-lg);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -398,118 +449,21 @@ body {
 
 .track-container {
     aspect-ratio: 16 / 9;
-    background-color: var(--color-surface-variant);
+    background-color: var(--surface-variant-color); /* Muted track background */
     border-radius: var(--border-radius-sm);
     position: relative;
     overflow: hidden;
-    border: 2px solid var(--color-primary);
+    border: 2px solid var(--primary); /* New primary color for track border */
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+    background-image: linear-gradient(to right, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.03) 100%),
+    repeating-linear-gradient(to right, transparent, transparent 50px, rgba(255,255,255,0.07) 50px, rgba(255,255,255,0.07) 100px);
 }
 
 .track-lane {
     position: absolute;
     width: 100%;
-    height: 2px;
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
-.track-lane:nth-child(1) {
-    top: 25%;
-}
-.track-lane:nth-child(2) {
-    top: 50%;
-}
-.track-lane:nth-child(3) {
-    top: 75%;
-}
-
-/* Chicken Styles
-   ========================================================================== */
-.chicken {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    transition: left 0.5s linear;
-    z-index: 10;
-}
-
-.chicken-body {
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    top: 5px;
-    left: 5px;
-    z-index: 11;
-}
-
-.chicken-wing {
-    position: absolute;
-    width: 20px;
-    height: 15px;
-    background-color: rgba(255, 255, 255, 0.7);
-    border-radius: 50% 50% 0 50%;
-    top: 15px;
-    left: 0;
-    transform-origin: top right;
-    animation: flap 0.2s infinite alternate;
-    z-index: 12;
-}
-
-.chicken-beak {
-    position: absolute;
-    width: 10px;
-    height: 5px;
-    background-color: #ff9800;
-    clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-    top: 15px;
-    right: 5px;
-    z-index: 13;
-}
-
-.chicken-name {
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.7rem;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    text-shadow: 0 0 2px var(--color-background);
-}
-
-/* Winner styles */
-.winner-crown {
-    position: absolute;
-    top: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.2rem;
-    z-index: 20;
-}
-
-.winner .chicken-body {
-    box-shadow: 0 0 10px var(--color-primary), 0 0 20px var(--color-secondary);
-}
-
-/* Race track enhancements */
-.track-container {
-    aspect-ratio: 16 / 9;
-    background-color: var(--color-surface-variant);
-    border-radius: var(--border-radius-sm);
-    position: relative;
-    overflow: hidden;
-    border: 2px solid var(--color-primary);
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
-    background-image: linear-gradient(to right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 100%),
-    repeating-linear-gradient(to right, transparent, transparent 50px, rgba(255,255,255,0.1) 50px, rgba(255,255,255,0.1) 100px);
-}
-
-.track-lane {
-    position: absolute;
-    width: 100%;
-    height: 1px;
-    background-color: rgba(255, 255, 255, 0.2);
+    height: 1px; /* Thinner lanes for a cleaner look */
+    background-color: rgba(255, 255, 255, 0.15); /* Slightly more visible lanes */
 }
 
 /* Generate multiple track lanes */
@@ -526,38 +480,125 @@ body {
     position: absolute;
     top: 0;
     height: 100%;
-    width: 5px;
+    width: 5px; /* Thinner lines */
     z-index: 5;
 }
 
-.track-container::before {
+.track-container::before { /* Start line */
     left: 5%;
     background: repeating-linear-gradient(
             to bottom,
-            white,
-            white 10px,
-            black 10px,
-            black 20px
+            var(--foreground), /* Use theme colors */
+            var(--foreground) 10px,
+            var(--background) 10px,
+            var(--background) 20px
     );
 }
 
-.track-container::after {
+.track-container::after { /* Finish line */
     right: 5%;
     background: repeating-linear-gradient(
             to bottom,
-            black,
-            black 10px,
-            white 10px,
-            white 20px
+            var(--background),
+            var(--background) 10px,
+            var(--foreground) 10px,
+            var(--foreground) 20px
     );
 }
 
-/* Animation for winner celebration */
-@keyframes pulse {
+/* Chicken Styles
+   ========================================================================== */
+.chicken {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    transition: left 0.5s linear; /* Keep original speed for race steps */
+    z-index: 10;
+    left: 5%;
+}
+
+
+
+.chicken:nth-child(1) {
+    top: calc(30% - 20px); /* 20px is half the chicken's height */
+}
+.chicken:nth-child(2) {
+    top: calc(40% - 20px);
+}
+.chicken:nth-child(3) {
+    top: calc(50% - 20px);
+}
+
+
+.chicken-body {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    top: 5px; /* Relative to .chicken parent */
+    left: 5px; /* Relative to .chicken parent */
+    z-index: 11;
+    background-color: #d1d5db;
+}
+
+.chicken-wing {
+    position: absolute;
+    width: 20px;
+    height: 15px;
+    background-color: rgba(248, 250, 252, 0.7); /* Lighter wing, var(--foreground) based */
+    border-radius: 50% 50% 0 50%;
+    top: 15px;
+    left: 0;
+    transform-origin: top right;
+    animation: flap 0.2s infinite alternate;
+    z-index: 12;
+}
+
+.chicken-beak {
+    position: absolute;
+    width: 10px;
+    height: 5px;
+    background-color: var(--color-accent-orange); /* Orange beak */
+    clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+    top: 15px;
+    right: 5px;
+    z-index: 13;
+}
+
+.chicken-name { /* This class was duplicated, consolidating */
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--color-text-secondary); /* Muted foreground for name */
+    white-space: nowrap;
+    text-shadow: 0 0 2px var(--background);
+}
+
+/* Winner styles */
+.winner-crown {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+    z-index: 20;
+    color: var(--color-accent-amber); /* Amber crown */
+}
+
+.winner .chicken-body {
+    /* Preserving amber/orange glow for winner */
+    box-shadow: 0 0 10px var(--color-accent-amber), 0 0 20px var(--color-accent-orange);
+    animation: pulseWinner 1s infinite ease-in-out; /* Adding a pulse to winner */
+}
+
+@keyframes pulseWinner {
     0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
+    50% { transform: scale(1.1); }
     100% { transform: scale(1); }
 }
+
 
 @keyframes flap {
     0% {
@@ -571,7 +612,7 @@ body {
 /* Betting Panel
    ========================================================================== */
 .betting-panel {
-    background-color: var(--color-surface);
+    background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
     padding: var(--spacing-lg);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -580,10 +621,10 @@ body {
 .betting-panel h2 {
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-lg);
-    color: var(--color-primary);
+    color: var(--primary); /* New primary color for panel title */
 }
 
-.chicken-list {
+.chicken-list { /* This class was used in race-item too. Ensuring general applicability. */
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
@@ -595,23 +636,27 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: var(--spacing-md);
-    background-color: var(--color-surface-variant);
+    background-color: var(--surface-variant-color);
     border-radius: var(--border-radius-sm);
     cursor: pointer;
-    transition: all var(--transition-speed);
+    transition: all var(--transition-speed) ease;
     border: 1px solid transparent;
 }
 
 .chicken-option:hover {
-    background-color: var(--color-surface-hover);
-    border-color: var(--color-primary);
+    background-color: var(--surface-hover-color);
+    border-color: var(--primary); /* New primary color for hover border */
     transform: translateY(-2px);
 }
 
 .chicken-option.selected {
-    border-color: var(--color-primary);
-    background-color: rgba(251, 191, 36, 0.1);
+    border-color: var(--primary); /* New primary color for selected border */
+    /* Light primary background for selected */
+    background-color: rgba(var(--primary-rgb, 37, 99, 235), 0.1); /* Fallback if --primary-rgb not set */
 }
+/* Helper for rgba with CSS var, set this if needed or use fixed values */
+:root { --primary-rgb: 37, 99, 235; }
+
 
 .chicken-info {
     display: flex;
@@ -619,20 +664,25 @@ body {
     gap: var(--spacing-sm);
 }
 
-.chicken-avatar {
+.chicken-avatar { /* Used in betting panel */
     width: 2.5rem;
     height: 2.5rem;
     border-radius: 50%;
-    border: 2px solid var(--color-primary);
+    border: 2px solid var(--primary); /* New primary border */
+    background-color: var(--muted); /* Muted background */
 }
 
-.chicken-name {
+/* .chicken-name is already defined globally for track, ensure it doesn't conflict if context changes */
+/* If needed, scope: .chicken-option .chicken-name-display or similar */
+.chicken-option .chicken-name-label { /* Renamed to avoid conflict if structure differs */
     font-weight: 600;
+    color: var(--color-text-primary);
 }
+
 
 .chicken-odds {
     color: var(--color-text-secondary);
-    background-color: var(--color-surface-hover);
+    background-color: var(--surface-hover-color); /* Slightly different bg for odds */
     padding: var(--spacing-xs) var(--spacing-sm);
     border-radius: var(--border-radius-lg);
     font-size: var(--font-size-xs);
@@ -652,32 +702,34 @@ body {
     display: block;
     margin-bottom: var(--spacing-xs);
     font-weight: 500;
+    color: var(--color-text-primary);
 }
 
 .bet-input {
     width: 100%;
     padding: var(--spacing-sm);
-    background-color: var(--color-surface-variant);
-    border: 1px solid var(--color-border);
+    background-color: var(--input); /* Input background from new theme */
+    border: 1px solid var(--border);
     border-radius: var(--border-radius-sm);
     color: var(--color-text-primary);
     margin: var(--spacing-xs) 0;
     font-size: var(--font-size-md);
-    transition: border-color var(--transition-speed);
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .bet-input:focus {
     outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+    border-color: var(--ring); /* Ring color for focus border */
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 37, 99, 235), 0.2); /* Ring shadow */
 }
 
 .winnings-display {
-    background-color: var(--color-surface-variant);
+    background-color: var(--surface-variant-color);
     padding: var(--spacing-md);
     border-radius: var(--border-radius-sm);
     margin: var(--spacing-md) 0;
-    border: 1px dashed var(--color-primary);
+    /* Preserving amber dashed border for winnings */
+    border: 1px dashed var(--color-accent-amber);
 }
 
 .winnings-label {
@@ -689,38 +741,40 @@ body {
 .winnings-amount {
     font-size: var(--font-size-lg);
     font-weight: 700;
-    color: var(--color-primary);
+    /* Preserving amber color for winnings amount */
+    color: var(--color-accent-amber);
 }
 
 .place-bet-btn {
     width: 100%;
     padding: var(--spacing-md);
-    background-color: var(--color-primary);
-    color: var(--color-background);
+    /* New primary button style */
+    background-image: linear-gradient(to right, var(--primary), var(--secondary));
+    color: var(--primary-foreground);
     border: none;
     border-radius: var(--border-radius-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-speed);
+    transition: all var(--transition-speed) var(--transition-bounce);
     font-size: var(--font-size-md);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 14px rgba(var(--primary-rgb, 37, 99, 235), 0.3);
 }
 
 .place-bet-btn:hover {
-    background-color: var(--color-primary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    background-image: linear-gradient(to right, var(--primary-hover), var(--secondary-hover));
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(var(--primary-rgb, 37, 99, 235), 0.4);
 }
 
 .place-bet-btn:active {
-    transform: translateY(0);
+    transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Race Info
    ========================================================================== */
 .race-info {
-    background-color: var(--color-surface);
+    background-color: var(--surface-color);
     border-radius: var(--border-radius-md);
     padding: var(--spacing-lg);
     margin-top: var(--spacing-xl);
@@ -730,7 +784,7 @@ body {
 .race-info h2 {
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-lg);
-    color: var(--color-primary);
+    color: var(--primary); /* New primary color for title */
 }
 
 .race-list {
@@ -739,12 +793,12 @@ body {
 }
 
 .race-item {
-    background-color: var(--color-surface-variant);
+    background-color: var(--surface-variant-color);
     padding: var(--spacing-md);
     border-radius: var(--border-radius-sm);
     margin-bottom: var(--spacing-sm);
     transition: transform var(--transition-speed);
-    border-left: 3px solid var(--color-primary);
+    border-left: 3px solid var(--primary); /* New primary color for border */
 }
 
 .race-item:hover {
@@ -757,19 +811,21 @@ body {
     margin-bottom: var(--spacing-xs);
 }
 
-.race-item .chicken-list {
+/* .race-item .chicken-list is already styled by global .chicken-list */
+.race-item .chicken-list-details { /* If specific styling for this context is needed */
     margin-left: var(--spacing-md);
     margin-top: var(--spacing-xs);
     font-size: var(--font-size-xs);
     color: var(--color-text-secondary);
 }
 
+
 /* Responsive Design
    ========================================================================== */
-@media (max-width: 1024px) {
+@media (max-width: 1024px) { /* Corresponds roughly to 'lg' breakpoint */
     :root {
-        --spacing-xl: 1.5rem;
-        --spacing-lg: 1.25rem;
+        --spacing-xl: 1.5rem; /* Keep original responsive adjustments if they make sense */
+        /* --spacing-lg: 1.25rem; /* Already 1.5rem, this would be a reduction */
     }
 
     .race-content {
@@ -777,22 +833,23 @@ body {
     }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) { /* Corresponds roughly to 'md' breakpoint */
     .navbar {
-        height: auto;
+        height: auto; /* Allow natural height based on content */
         padding: var(--spacing-sm) 0;
     }
 
     .navbar-container {
         flex-wrap: wrap;
         gap: var(--spacing-sm);
+        padding: 0 var(--spacing-md); /* Ensure padding for wrapped items */
     }
 
     .mobile-menu-button {
         display: flex;
         align-items: center;
         justify-content: center;
-        order: 3;
+        order: 3; /* Standard mobile layout: logo, actions, burger */
     }
 
     .logo {
@@ -801,28 +858,39 @@ body {
 
     .user-section {
         order: 2;
-        margin-left: auto;
+        margin-left: auto; /* Push user section to the right before burger */
     }
 
-    .nav-menu {
+    .nav-menu { /* Mobile navigation panel */
         position: fixed;
-        top: var(--header-height);
+        /* Adjusted top to be dynamic with --header-height, but navbar height is auto now */
+        top: calc(var(--header-height) + 1px); /* Position below the potentially wrapped navbar */
+        /* A fixed value might be better if navbar height becomes unpredictable: e.g., top: 60px; */
         left: 0;
         right: 0;
-        background-color: var(--color-surface);
+        background-color: var(--surface-color); /* Opaque background for mobile dropdown */
         padding: 0;
         flex-direction: column;
         gap: 0;
-        transform: translateY(-100%);
+        transform: translateY(-150%); /* Ensure it's fully off-screen */
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s ease-in-out;
         box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        border-bottom: 1px solid var(--color-border);
-        order: 4;
+        border-bottom: 1px solid var(--border);
+        order: 4; /* Below all other navbar items */
         width: 100%;
-        z-index: 99;
+        z-index: 99; /* Below navbar (100) but above content */
+        max-height: calc(100vh - var(--header-height) - 1px);
+        overflow-y: auto;
     }
+    /* Correcting mobile nav top position, since navbar height becomes auto */
+    /* This requires JS to set a CSS variable for current navbar height or use a fixed estimate */
+    /* For now, let's assume a fixed top, e.g., matching desktop header height if it's somewhat consistent */
+    .nav-menu {
+        top: var(--header-height); /* Revert to original if navbar height doesn't change much */
+    }
+
 
     .nav-menu.active {
         transform: translateY(0);
@@ -838,7 +906,7 @@ body {
 
     .nav-links li {
         width: 100%;
-        border-bottom: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--border);
     }
 
     .nav-links li:last-child {
@@ -851,16 +919,24 @@ body {
         justify-content: center;
     }
 
-    .nav-links a::after {
+    .nav-links a::before { /* Mobile nav links usually don't have the underline */
         display: none;
     }
+    .nav-links a:hover::before { display:none; }
+    .nav-links a.active::before { display:none; }
+
 
     .nav-links a:hover {
-        background-color: var(--color-surface-hover);
+        background-color: var(--surface-hover-color);
+        transform: translateY(0); /* Disable Y-transform on mobile hover */
+    }
+    .nav-links a.active {
+        background-color: var(--surface-hover-color); /* Similar visual cue */
     }
 
+
     .race-content {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Stack race content and betting panel */
     }
 
     .footer-content {
@@ -875,10 +951,13 @@ body {
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 480px) { /* Corresponds roughly to 'sm' or extra-small */
     :root {
-        --font-size-xl: 1.5rem;
-        --font-size-lg: 1.25rem;
+        --font-size-xl: 1.75rem; /* Slightly smaller for very small screens */
+        --font-size-lg: 1.35rem;
+    }
+    .container {
+        padding: 0 var(--spacing-md); /* Reduce padding on smallest screens */
     }
 
     .race-header {
@@ -890,7 +969,7 @@ body {
 
     .credits-display {
         padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 0.75rem;
+        font-size: 0.75rem; /* Smaller text for credits */
     }
 
     .user-avatar {
@@ -899,7 +978,7 @@ body {
     }
 
     .user-name {
-        display: none;
+        display: none; /* Hide user name on very small screens to save space */
     }
 
     .race-track,
@@ -910,23 +989,25 @@ body {
 
     .chicken-option {
         padding: var(--spacing-sm);
+        flex-direction: column; /* Stack chicken info and odds */
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+    .chicken-odds {
+        align-self: flex-end;
     }
 
-    .chicken-avatar {
+    .chicken-avatar { /* In betting panel on mobile */
         width: 2rem;
         height: 2rem;
     }
 }
 
-/* Animation Effects
+/* Animation Effects (mostly kept from original, ensure colors match theme)
    ========================================================================== */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .fade-in {
@@ -934,26 +1015,20 @@ body {
 }
 
 @keyframes slideInRight {
-    from {
-        transform: translateX(20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
 .slide-in-right {
     animation: slideInRight 0.5s ease-in-out;
 }
 
-/* Dark Mode Toggle
+/* Dark Mode Toggle (Theme is already dark, this could be for future light mode)
    ========================================================================== */
 .dark-mode-toggle {
     background: none;
     border: none;
-    color: var(--color-text-primary);
+    color: var(--foreground); /* Use foreground color */
     cursor: pointer;
     padding: var(--spacing-xs);
     font-size: 1.2rem;
@@ -961,9 +1036,15 @@ body {
     align-items: center;
     justify-content: center;
     margin-right: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    transition: background-color var(--transition-speed);
+}
+
+.dark-mode-toggle:hover {
+    background-color: var(--surface-hover-color);
 }
 
 .dark-mode-toggle:focus {
     outline: none;
+    box-shadow: 0 0 0 2px var(--ring); /* Focus ring */
 }
-
