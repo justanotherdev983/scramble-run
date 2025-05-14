@@ -31,6 +31,7 @@ var (
 	db                  *sql.DB
 	baseTemplate        *template.Template
 	homeTemplate        *template.Template
+	raceTemplate        *template.Template
 	loginTemplate       *template.Template
 	signupTemplate      *template.Template
 	betResponseTemplate *template.Template
@@ -68,6 +69,11 @@ func init() {
 	homeTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles("src/web/templates/home.gohtml")
 	if err != nil {
 		log.Fatalf("Error parsing home template: %v", err)
+	}
+
+	raceTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles("src/web/templates/races.gohtml")
+	if err != nil {
+		log.Fatalf("Error parsing base template: %v", err)
 	}
 
 	loginTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles("src/web/templates/login.gohtml")
@@ -172,7 +178,8 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	// Handlers are now in their respective files but part of 'package main'
-	http.HandleFunc("/", homeHandler)                                    // race_handler.go
+	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/races", raceHandler)                               // race_handler.go
 	http.HandleFunc("/login", loginHandler)                              // auth_handler.go
 	http.HandleFunc("/signup", signupHandler)                            // auth_handler.go
 	http.HandleFunc("/select-chicken/", selectChickenHandler)            // bet_handler.go

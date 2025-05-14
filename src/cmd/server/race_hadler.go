@@ -9,6 +9,18 @@ import (
 )
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
+	data := PageData{
+		Title: "Scramble Run",
+	}
+
+	err := homeTemplate.ExecuteTemplate(w, "base.gohtml", data)
+	if err != nil {
+		log.Printf("raceHandler: Template execution error: %v", err)
+
+	}
+}
+
+func raceHandler(w http.ResponseWriter, r *http.Request) {
 	currentUserID := 1 // <<<< --- !!! !!! --- >>>
 	var currentUser User
 	var userBalance float64
@@ -174,9 +186,9 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		Success: false,
 	}
 
-	err := homeTemplate.ExecuteTemplate(w, "base.gohtml", data)
+	err := raceTemplate.ExecuteTemplate(w, "base.gohtml", data)
 	if err != nil {
-		log.Printf("homeHandler: Template execution error: %v", err)
+		log.Printf("raceHandler: Template execution error: %v", err)
 
 	}
 }

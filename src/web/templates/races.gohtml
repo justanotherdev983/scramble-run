@@ -1,0 +1,274 @@
+{{define "css"}}
+    <link rel="stylesheet" href="/static/css/main.css" />
+{{end}}
+
+{{define "content"}}
+
+    <div class="container mt-4">
+        <header class="race-header">
+            <h1 class="race-title">Scramble Run</h1>
+            <!-- This div will poll for updates and replace its own content -->
+            <div class="race-timer"
+                 id="race-timer-dynamic-area"
+                 hx-get="/next-race-info"
+                 hx-trigger="every 1s"
+                 hx-swap="innerHTML">
+
+                <!-- Initial content (rendered by homeHandler on first page load) -->
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="race-timer-icon">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span class="race-timer-prefix">
+            {{.InitialStatusMessage}}
+        </span>
+                <span class="race-timer-countdown">
+            {{.InitialNextRaceTime}}
+        </span>
+                {{if .InitialRaceName}}
+                    <span class="race-timer-racename">({{ .InitialRaceName }})</span>
+                {{end}}
+                <br>
+                <span class="race-timer-bettingstatus">
+            {{if .IsBettingInitiallyOpen}}
+                Betting is Open!
+                {{/* Check CurrentRaceDisplay for Running status as HTMX won't have updated this part yet on initial load */}}
+            {{else if .CurrentRaceDisplay}}{{if eq .CurrentRaceDisplay.Status "Running"}}
+                Betting Closed (Race Running)
+            {{else}}
+                Betting is Closed
+            {{end}}{{else}}
+                Betting is Closed
+            {{end}}
+        </span>
+                <!-- End of initial content -->
+            </div>
+        </header>
+
+        <main class="race-content">
+            <!-- Left Column: Race Track & Betting -->
+            <div>
+                <!-- Race Track Section -->
+                <section class="race-track mb-4">
+                    <h2>Race Track</h2>
+                    <div class="track-container"
+                         id="race-track-container"
+                         hx-get="/race-update"
+                         hx-trigger="every 0.5s"
+                         hx-swap="innerHTML"
+                         data-race-status="{{.RaceStatus}}">
+                        {{if .ActiveRace}}
+                            {{range .ActiveRace.Chickens}}
+                                <div class="chicken"
+                                     id="chicken-{{.ID}}"
+                                     data-chicken-id="{{.ID}}"
+                                     data-chicken-name="{{.Name}}"
+                                     {{if and $.RaceFinished (eq $.WinnerID .ID)}}data-winner="true"{{end}}
+                                     style="top: {{.Lane}}%; left: {{.Progress}}%; transition: left 0.5s ease-in-out;">
+                                    <div class="chicken-body" style="background-color: {{.Color}}"></div>
+                                    <div class="chicken-wing"></div>
+                                    <div class="chicken-beak"></div>
+                                    <span class="chicken-name">{{.Name}}</span>
+                                </div>
+                            {{end}}
+                            <div class="track-lane" style="top: 20%"></div>
+                            <div class="track-lane" style="top: 40%"></div>
+                            <div class="track-lane" style="top: 60%"></div>
+                            <div class="track-lane" style="top: 80%"></div>
+                        {{else}}
+                            <div class="race-placeholder">Waiting for next race to start...</div>
+                        {{end}}
+                    </div>
+                    <div class="race-status"></div>
+                </section>
+
+                <!-- Betting Panel -->
+                <section class="betting-panel">
+                    <h2>Place Your Bet</h2>
+                    <form id="bettingForm"
+                          hx-post="/place-bet"
+                          hx-target="#bet-response-content"
+                          hx-swap="innerHTML">
+
+                        <div class="mb-3">
+                            <label class="form-label">Select a Chicken:</label>
+                            <div class="chicken-list">
+                                {{if .Chickens}}
+                                    {{range .Chickens}}
+                                        <div class="chicken-option"
+                                             data-chicken-id="{{.ID}}"
+                                             hx-get="/select-chicken/{{.ID}}"
+                                             hx-trigger="click"
+                                             hx-target="#winnings-calc"
+                                             hx-swap="innerHTML"
+                                             hx-vals='{"betAmount": "javascript:document.querySelector(\"#bettingForm [name=betAmount]\").value"}'>
+                                            <div class="chicken-info" style="display:flex; align-items:center;">
+                                                <div class="chicken-avatar" style="background-color: {{.Color}}"></div>
+                                                <span>{{.Name}}</span>
+                                            </div>
+                                            <span class="chicken-odds">Odds: {{.Odds}}</span>
+                                        </div>
+                                    {{end}}
+                                {{else}}
+                                    <p>No chickens available for betting.</p>
+                                {{end}}
+                            </div>
+                            <input type="hidden" id="selectedChickenForBet" name="selectedChicken" value="">
+                        </div>
+
+
+                        <div class="mb-3">
+                            <label for="betAmountInput" class="form-label">Bet Amount (Credits)</label>
+                            <input type="number"
+                                   id="betAmountInput"
+                                   class="form-control bet-input"
+                                   value="10"
+                                   min="1"
+                                   hx-post="/calculate-winnings"
+                                   hx-trigger="input delay:500ms, change"
+                                   hx-target="#winnings-calc"
+                                   hx-swap="innerHTML"
+                                   name="betAmount"
+                                   hx-include="#selectedChickenForBet" />
+                        </div>
+
+                        <!-- Winnings Calculation Display (HTMX Target) -->
+                        <div class="winnings-display" id="winnings-calc">
+                            <!-- Initial content, will be replaced by /select-chicken or /calculate-winnings -->
+                            <p>Potential Win:</p>
+                            <span class="winnings-amount">{{printf "%.2f" .PotentialWinnings}} Credits</span>
+                            <input type="hidden" name="selectedChicken" value="" />
+                        </div>
+
+                        <button type="submit" class="btn btn-success place-bet-btn">
+                            Place Bet
+                        </button>
+                    </form>
+                    <!-- Bet Response Area: Container and inner content div -->
+                    <div id="bet-response-container" class="mt-3">
+                        <div id="bet-response-content">
+                            {{if .Message}}
+                                <div class="alert {{if .Success}}alert-success{{else}}alert-danger{{end}}">{{.Message}}</div>
+                            {{end}}
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: User Info & Race History -->
+            <div>
+                <!-- User Info/Balance Panel -->
+                <div class="user-profile-panel card mb-3">
+                    <div class="card-header">User Profile</div>
+                    <div class="card-body">
+                        <p><strong>User:</strong> {{.UserData.Name}}</p>
+                        <p><strong>Balance:</strong> <span id="user-balance-display">{{printf "%.2f" .UserBalance}}</span> credits</p>
+                        <a href="/logout" class="btn btn-sm btn-warning">Logout (TODO)</a>
+                    </div>
+                </div>
+
+                <!-- Race History Panel -->
+                <section class="race-info card">
+                    <div class="card-header">Race History</div>
+                    <div class="card-body">
+                        {{if .Races}}
+                            <ul class="list-group list-group-flush race-list">
+                                {{range .Races}}
+                                    <li class="list-group-item race-item">
+                                        <strong>{{.Name}}</strong>
+                                        {{if .Status}} <span class="badge bg-secondary">{{.Status}}</span>{{end}}
+                                        {{if eq .Status "Finished"}}
+                                            <br>Winner: {{if .Winner}}{{.Winner}}{{else}}N/A{{end}}
+                                        {{end}}
+                                        <br><small class="text-muted">Date: {{.Date.Format "Jan 2, 2006 15:04 MST"}}</small>
+                                        {{if .ChickenNames}}
+                                            <ul class="chicken-list-history mt-1">
+                                                <small>Participating:</small>
+                                                {{range .ChickenNames}}
+                                                    <li><small>{{.}}</small></li>
+                                                {{end}}
+                                            </ul>
+                                        {{end}}
+                                    </li>
+                                {{end}}
+                            </ul>
+                        {{else}}
+                            <p>No race history available.</p>
+                        {{end}}
+                    </div>
+                </section>
+                <div class="mt-2">
+                    <form hx-post="/admin/trigger-race-cycle" hx-target="this" hx-swap="none">
+                        <button class="btn btn-sm btn-info">Dev: Trigger Race Cycle</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Helper to select chicken and update the hidden field for the main bet form
+            document.querySelectorAll('.chicken-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const chickenId = this.dataset.chickenId;
+                    document.getElementById('selectedChickenForBet').value = chickenId;
+
+                    // Visually indicate selection (optional)
+                    document.querySelectorAll('.chicken-option').forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+
+                    // Manually trigger the htmx request on the bet amount input
+                    // to recalculate winnings when a chicken is selected.
+                    const betAmountInput = document.querySelector("#betAmountInput");
+                    if (betAmountInput) {
+                        htmx.trigger(betAmountInput, 'change');
+                    }
+                });
+            });
+
+            // Race animation handling
+            htmx.on('htmx:afterSwap', function(event) {
+                if (event.detail.target.id === 'race-track-container') {
+                    // Check if the server has determined the race is finished AND there's a winner
+                    const container = event.detail.target;
+                    const isRaceFinished = container.getAttribute('data-race-status') === 'Finished';
+                    const winner = document.querySelector('[data-winner="true"]');
+
+                    if (isRaceFinished && winner) {
+                        // Only stop polling when the server confirms the race is finished
+                        htmx.remove('#race-track-container', 'hx-trigger');
+
+                        // Update race status
+                        const statusElement = document.querySelector('.race-status');
+                        if (statusElement) {
+                            const winnerName = winner.getAttribute('data-chicken-name');
+                            statusElement.textContent = `${winnerName} wins the race!`;
+                            statusElement.classList.add('winner-announcement');
+                        }
+
+                        // Add celebration effect
+                        celebrateWinner();
+                    }
+                }
+            });
+
+            function celebrateWinner() {
+                const winner = document.querySelector('[data-winner="true"]');
+                if (!winner) return;
+
+                // Add a crown to the winner
+                if (!winner.querySelector('.winner-crown')) {
+                    const crown = document.createElement('div');
+                    crown.className = 'winner-crown';
+                    crown.textContent = '👑';
+                    winner.prepend(crown);
+                }
+
+                // Add pulsing animation
+                winner.style.animation = 'pulse 1s infinite alternate';
+            }
+        });
+    </script>
+    </div>
+{{end}}
