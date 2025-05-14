@@ -9,10 +9,6 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	// Import crypto/bcrypt and go-sqlite3 if they are not used elsewhere,
-	// but they are used in auth_handler.go and db_utils.go respectively.
-	// _ "golang.org/x/crypto/bcrypt"
-	// _ "github.com/mattn/go-sqlite3"
 )
 
 // Constants
@@ -34,6 +30,8 @@ var (
 	raceTemplate        *template.Template
 	loginTemplate       *template.Template
 	signupTemplate      *template.Template
+	contactTemplate     *template.Template
+	aboutUsTemplate     *template.Template
 	betResponseTemplate *template.Template
 	raceInfoTemplate    *template.Template
 
@@ -61,6 +59,13 @@ func init() {
 	}
 	rand.Seed(time.Now().UnixNano())
 
+	// Initialize SMTP/Contact settings
+	smtpHost = getEnvOrDefault("SMTP_HOST", "smtp.gmail.com")
+	smtpPort = getEnvOrDefault("SMTP_PORT", "587")
+	smtpUsername = getEnvOrDefault("SMTP_USERNAME", "")                          // Fill with your actual Gmail address or App Password
+	smtpPassword = getEnvOrDefault("SMTP_PASSWORD", "")                          // Fill with your actual Gmail App Password
+	toEmail = getEnvOrDefault("CONTACT_EMAIL", "your-company-email@example.com") // Email to receive contact messages
+
 	baseTemplate, err = template.ParseFiles("src/web/templates/base.gohtml")
 	if err != nil {
 		log.Fatalf("Error parsing base template: %v", err)
@@ -82,6 +87,16 @@ func init() {
 	}
 
 	signupTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles("src/web/templates/signup.gohtml")
+	if err != nil {
+		log.Fatalf("Error parsing signup template: %v", err)
+	}
+
+	contactTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles("src/web/templates/contact.gohtml")
+	if err != nil {
+		log.Fatalf("Error parsing signup template: %v", err)
+	}
+
+	aboutUsTemplate, err = template.Must(baseTemplate.Clone()).ParseFiles("src/web/templates/about-us.gohtml")
 	if err != nil {
 		log.Fatalf("Error parsing signup template: %v", err)
 	}
@@ -180,16 +195,18 @@ func main() {
 	// Handlers are now in their respective files but part of 'package main'
 	http.HandleFunc("/", homeHandler)
 	http.HandleFunc("/races", raceHandler)                               // race_handler.go
-	http.HandleFunc("/login", loginHandler)                              // auth_handler.go
-	http.HandleFunc("/signup", signupHandler)                            // auth_handler.go
+	http.HandleFunc("/login", loginHandler)                              // auth.go
+	http.HandleFunc("/signup", signupHandler)                            // auth.go
+	http.HandleFunc("/contact", contactHandler)                          // auth.go
+	http.HandleFunc("/about-us", aboutUsHandler)                         // auth.go
 	http.HandleFunc("/select-chicken/", selectChickenHandler)            // bet_handler.go
 	http.HandleFunc("/calculate-winnings", calculateWinningsHandler)     // bet_handler.go
 	http.HandleFunc("/place-bet", placeBetHandler)                       // bet_handler.go
 	http.HandleFunc("/next-race-info", nextRaceInfoHandler)              // race_handler.go
 	http.HandleFunc("/admin/trigger-race-cycle", handleTriggerRaceCycle) // race_handler.go
+	http.HandleFunc("/race-update", raceUpdateHandler)                   // race_animation.go
 
-	// Add the new race update handler
-	http.HandleFunc("/race-update", raceUpdateHandler) // race_animation.go
+	http.HandleFunc("/submit-contact", contactHandler)
 
 	fmt.Printf("Server starting on http://localhost:%s\n", local_port)
 	err := http.ListenAndServe(":"+local_port, nil)
