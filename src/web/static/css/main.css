@@ -514,18 +514,31 @@ body {
     height: 40px;
     transition: left 0.5s linear; /* Keep original speed for race steps */
     z-index: 10;
+    left: 5%;
 }
+
+
+
+.chicken:nth-child(1) {
+    top: calc(30% - 20px); /* 20px is half the chicken's height */
+}
+.chicken:nth-child(2) {
+    top: calc(40% - 20px);
+}
+.chicken:nth-child(3) {
+    top: calc(50% - 20px);
+}
+
 
 .chicken-body {
     position: absolute;
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    top: 5px;
-    left: 5px;
+    top: 5px; /* Relative to .chicken parent */
+    left: 5px; /* Relative to .chicken parent */
     z-index: 11;
-    /* Default body color - can be dynamic per chicken */
-    background-color: #d1d5db; /* A light gray, can be varied */
+    background-color: #d1d5db;
 }
 
 .chicken-wing {
