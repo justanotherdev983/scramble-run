@@ -139,13 +139,19 @@ func calculateWinningsHandler(w http.ResponseWriter, r *http.Request) {
 func placeBetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
 
-	if r.Method != http.MethodPost {
-		log.Printf("placeBetHandler: Denied %s request.", r.Method)
-		_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Method not allowed", NewBalance: -1})
+	// --- Authentication ---
+	if sessionManager == nil {
+		log.Printf("placeBetHandler: CRITICAL: sessionManager is not initialized.")
+		// Attempt to send a structured error if the template is available
+		if betResponseTemplate != nil {
+			_ = betResponseTemplate.Execute(w, BetResponse{Success: false, Message: "Server configuration error. Please try again later.", NewBalance: -1})
+		} else {
+			http.Error(w, "Server configuration error", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	currentUserID := 1 // <<< --- !!! PLACEHOLDER: Replace with actual User ID from session !!! --- >>>
+	currentUserID := sessionManager.GetInt(r.Context(), sessionUserIDKey)
 	var userCurrentBalanceForErrorDisplay float64 = -1
 	// Fetch initial balance for error display if needed, outside transaction for non-critical info
 	// This is a bit redundant as we fetch it again in TX, but okay for display purposes.
