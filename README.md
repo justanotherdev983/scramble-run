@@ -10,5 +10,3 @@ $ cd scramble-run
 $ sudo apt install golang-go
 $ go run src/main.go
 ```
-# Video link
--   https://youtu.be/XUKh3jPRub4
